@@ -3,8 +3,6 @@
 CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の **PDF生成部分を、ブラウザだけで完結する pdf-lib 構成に移植**し、PWA化・データ保存・静的ホスティング対応までを行ったものです。
 サーバー不要・データ外部送信なし（ゼロデータ）で、介護認定申請書テンプレPDFの座標上に入力データをレンダリングします。
 
-元プロジェクト: `C:\Users\dghy1\IdeaProjects\CareDocWeb`
-
 ---
 
 ## 構成
@@ -42,11 +40,6 @@ care-doc-pwa/
 ## ローカルでの起動・確認
 
 `fetch()` で同フォルダのファイルを読むため、**file:// では動きません。ローカルサーバー経由で開きます。**
-
-```powershell
-cd C:\Users\dghy1\care-doc-pwa\public
-python -m http.server 5500
-```
 
 → Chrome で `http://localhost:5500` を開く（`Ctrl + F5` で強制再読み込み推奨）
 
