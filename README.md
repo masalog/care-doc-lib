@@ -32,9 +32,6 @@ care-doc-pwa/
 └── README.md
 ```
 
-> デプロイするのは `public/` の中身だけです。
-> `index.html` / `sw.js` / `manifest.webmanifest` / `_headers` は動作の都合で `public/` 直下（ルート）に固定。特に `sw.js` はサブフォルダに置くとキャッシュ制御スコープが `public/` 全体に及ばなくなるため、必ずルートに置きます。
-
 ---
 
 ## ローカルでの起動・確認
