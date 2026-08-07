@@ -1,6 +1,6 @@
 # CareDocLib — 介護認定申請書作成アプリ（pdf-lib 版）
 
-CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の **PDF生成部分を、ブラウザだけで完結する pdf-lib 構成に移植**し、データ保存・静的ホスティング対応までを行ったものです。 PDF生成もデータ保存もすべてブラウザ内で完結し（サーバー処理なし・データ外部送信なしのゼロデータ）、介護認定申請書テンプレPDFの座標上に入力データをレンダリングします。
+CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の **PDF生成部分を、ブラウザだけで完結する pdf-lib(JavaScript) 構成に移植**し、データ保存・静的ホスティング対応までを行ったものです。 PDF生成もデータ保存もすべてブラウザ内で完結し（サーバー処理なし・データ外部送信なしのゼロデータ）、介護認定申請書テンプレPDFの座標上に入力データをレンダリングします。
 
 ## 公開デモ
 
@@ -50,7 +50,9 @@ care-doc-lib/
 
 ブラウザ で `http://localhost:5500` を開く（`Ctrl + F5` で強制再読み込み推奨）
 
-### 起動後の確認
+---
+
+## 起動後の確認
 
 - 上部に `座標:OK(47) / テンプレ:OK / フォント:OK`、下部に「準備完了」→ 読込成功
 - 生成前は右側にプレースホルダー（書類アイコン＋案内文）を表示
@@ -95,7 +97,9 @@ care-doc-lib/
 
 保存先は DB 名 `caredoc`、ストア `members`（利用者）/ `settings`（共通設定）。 初回起動時、利用者データが空なら CareDocWeb のエクスポートデータ（利用者7名＋共通設定1件）を自動投入します（`storage-seed.js` の `seedIfEmpty()`）。 ブラウザのデータを消去すると保存内容も消えます。端末間の同期はありません。
 
-### JSONファイルでの一括保存・追加
+---
+
+## JSONファイルでの一括保存・追加
 
 「保存済み利用者」パネルの2つのボタンで、全データをJSONファイルに書き出し・取り込みできます（すべて端末内で完結・外部送信なし）。
 
@@ -134,14 +138,6 @@ npm install -g wrangler
 npx wrangler pages deploy public --project-name caredoc
 
 ```
-
-### デプロイ後の確認
-
-- HTTPSで開く（Cloudflareは自動HTTPS）
-- 「PDFを生成してプレビュー」が動作するか
-- IndexedDBへの保存・復元が動作するか
-
----
 
 ## PDFBox → pdf-lib 対応表
 
