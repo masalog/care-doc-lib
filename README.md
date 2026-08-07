@@ -6,11 +6,6 @@ CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の **PDF生成�
 
 🔗 **[https://f98be7a1.care-doc-lib.pages.dev](https://f98be7a1.care-doc-lib.pages.dev)**（Cloudflare Pages）
 
----
-
-## 免責事項
-
-⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した**非公式ツール**です。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
 
 ---
 
@@ -177,3 +172,8 @@ npx wrangler pages deploy public --project-name caredoc
 | データ保存 | IndexedDB（利用者 `members` / 共通設定 `settings`・端末内のみ） |
 | ホスティング | 静的（Cloudflare Pages 等）／サーバーなし・ゼロデータ |
 
+---
+
+## 免責事項
+
+⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した**非公式ツール**です。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
