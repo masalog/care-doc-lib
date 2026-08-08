@@ -2,10 +2,9 @@
 
 CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の PDF 生成部分を、ブラウザだけで完結する pdf-lib(JavaScript) 構成に移植し、データ保存・静的ホスティング対応までを行いました。PDF生成もデータ保存もすべてブラウザ内で完結し（サーバー処理なし・データ外部送信なしのゼロデータ）、介護認定申請書テンプレPDFの座標上に入力データをレンダリングします。
 
-## 公開デモ
+## 公開デモURL
 
-🔗 [https://f98be7a1.care-doc-lib.pages.dev](https://f98be7a1.care-doc-lib.pages.dev)（Cloudflare Pages）
-
+🔗 [https://14ad7582.care-doc-lib.pages.dev](https://14ad7582.care-doc-lib.pages.dev)（Cloudflare Pages）
 
 ---
 
