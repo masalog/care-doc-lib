@@ -124,7 +124,7 @@ npm install -g wrangler
 npx wrangler pages project create care-doc-lib
 
 # デプロイ（毎回）
-npx wrangler pages deploy public --project-name=care-doc-lib
+npx wrangler pages deploy public --project-name=care-doc-lib --branch=main
 
 # デプロイ状況確認
 npx wrangler pages deployment list --project-name=care-doc-lib
