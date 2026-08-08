@@ -172,6 +172,35 @@ npx wrangler pages deployment list --project-name=care-doc-lib
 
 ---
 
+## セキュリティヘッダ
+
+`public/_headers` の `/*` ブロックで、全レスポンスに以下のセキュリティヘッダを付与しています。外部リソースを一切読まない（CDNなし・全自己ホスト）構成のため、CSPを非常に厳しく設定できます。
+
+| ヘッダ | 値 | 役割 |
+| --- | --- | --- |
+| `X-Content-Type-Options` | `nosniff` | MIMEスニッフィングを禁止（拡張子に反した実行を防止） |
+| `X-Frame-Options` | `DENY` | iframe埋め込みを禁止（クリックジャック対策） |
+| `Referrer-Policy` | `no-referrer` | 遷移先にリファラーを送らない（プライバシー保護） |
+| `Permissions-Policy` | `geolocation=(), camera=(), microphone=()` | 位置情報・カメラ・マイクを全面無効化 |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPSを強制（1年間・サブドメイン含む） |
+| `Cross-Origin-Opener-Policy` | `same-origin` | クロスオリジン分離（他オリジンとの共有を遮断） |
+| `Content-Security-Policy` | （下記参照） | XSS・不正リソース読込を防止。自己オリジン（`'self'`）のみ許可 |
+
+### CSP（Content-Security-Policy）の設計
+
+```
+default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:;
+font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:;
+base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+```
+
+- `style-src 'self'`: インラインstyleを禁止（`'unsafe-inline'` なし）。このため `index.html` の iframe は `style="display:none"` をやめ、`class="is-hidden"`（`styles.css` で定義）に置き換えています。なお `pdf-draw.js` の `element.style.display = ...`（JSのDOM操作）はCSPの制約外のためプレビュー表示は正常に動作します。
+- `img-src` / `frame-src` に `blob:`: PDFプレビュー（`URL.createObjectURL()` → iframe）のため必須。
+- `object-src 'none'` / `form-action 'none'` / `base-uri 'self'`: 攻撃面を最小化。
+- `frame-ancestors 'none'`: `X-Frame-Options: DENY` と二重でクリックジャックを防止。
+
+---
+
 ## 免責事項
 
 ⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
