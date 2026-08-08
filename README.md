@@ -183,21 +183,8 @@ npx wrangler pages deployment list --project-name=care-doc-lib
 | `Referrer-Policy` | `no-referrer` | 遷移先にリファラーを送らない（プライバシー保護） |
 | `Permissions-Policy` | `geolocation=(), camera=(), microphone=()` | 位置情報・カメラ・マイクを全面無効化 |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPSを強制（1年間・サブドメイン含む） |
-| `Cross-Origin-Opener-Policy` | `same-origin` | クロスオリジン分離（他オリジンとの共有を遮断） |
-| `Content-Security-Policy` | （下記参照） | XSS・不正リソース読込を防止。自己オリジン（`'self'`）のみ許可 |
-
-### CSP（Content-Security-Policy）の設計
-
-```
-default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:;
-font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:;
-base-uri 'self'; form-action 'none'; frame-ancestors 'none'
-```
-
-- `style-src 'self'`: インラインstyleを禁止（`'unsafe-inline'` なし）。このため `index.html` の iframe は `style="display:none"` をやめ、`class="is-hidden"`（`styles.css` で定義）に置き換えています。なお `pdf-draw.js` の `element.style.display = ...`（JSのDOM操作）はCSPの制約外のためプレビュー表示は正常に動作します。
-- `img-src` / `frame-src` に `blob:`: PDFプレビュー（`URL.createObjectURL()` → iframe）のため必須。
-- `object-src 'none'` / `form-action 'none'` / `base-uri 'self'`: 攻撃面を最小化。
-- `frame-ancestors 'none'`: `X-Frame-Options: DENY` と二重でクリックジャックを防止。
+| `Cross-Origin-Opener-Policy` | `same-origin` | 他オリジンの文書との browsing context group と opener の共有を制限 |
+| `Content-Security-Policy` | （下記参照） | XSS・不正リソース読込のリスクを軽減。自己オリジン（`'self'`）のみ許可 |
 
 ---
 
