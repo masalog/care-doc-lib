@@ -15,7 +15,7 @@ CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の PDF 生成部
 care-doc-lib/
 ├── public/                        # ★デプロイ対象（これだけを配信する）
 │   ├── index.html                 # 本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
-│   ├── _headers                   # Cloudflare Pages/Netlify 用キャッシュ・セキュリティ設定
+│   ├── _headers                   # Cloudflare Pages用キャッシュ・セキュリティ設定
 │   ├── assets/                    # アプリのコード・ライブラリ
 │   │   ├── styles.css             # スタイル（ベージュ＋オレンジ配色）
 │   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
