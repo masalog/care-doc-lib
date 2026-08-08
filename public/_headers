@@ -1,0 +1,51 @@
+# Cloudflare Pages 用ヘッダ設定
+
+# 静的アセット（ライブラリ・フォント・テンプレ）は長期キャッシュ
+/assets/pdf-lib.min.js
+  Cache-Control: public, max-age=31536000, immutable
+/assets/fontkit.umd.min.js
+  Cache-Control: public, max-age=31536000, immutable
+/data/NotoSansJP-Regular.ttf
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: font/ttf
+/data/template.pdf
+  Cache-Control: public, max-age=31536000, immutable
+
+# 座標データは更新される可能性があるので短めキャッシュ
+/data/positions.json
+  Cache-Control: public, max-age=3600
+  Content-Type: application/json; charset=utf-8
+
+# HTML は毎回検証
+/index.html
+  Cache-Control: no-cache
+
+# アプリ本体（CSS/JS）は毎回検証（更新を即反映するため）
+# JS は機能ごとに9ファイルに分割（pdf-core/draw/export・storage-core/crud/export/import/seed・main）
+/assets/styles.css
+  Cache-Control: no-cache
+/assets/pdf-core.js
+  Cache-Control: no-cache
+/assets/pdf-draw.js
+  Cache-Control: no-cache
+/assets/pdf-export.js
+  Cache-Control: no-cache
+/assets/storage-core.js
+  Cache-Control: no-cache
+/assets/storage-crud.js
+  Cache-Control: no-cache
+/assets/storage-export.js
+  Cache-Control: no-cache
+/assets/storage-import.js
+  Cache-Control: no-cache
+/assets/storage-seed.js
+  Cache-Control: no-cache
+/assets/main.js
+  Cache-Control: no-cache
+
+# 全体のセキュリティヘッダ
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: no-referrer
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
