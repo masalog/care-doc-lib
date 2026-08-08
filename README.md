@@ -179,12 +179,12 @@ npx wrangler pages deployment list --project-name=care-doc-lib
 | ヘッダ | 値 | 役割 |
 | --- | --- | --- |
 | `X-Content-Type-Options` | `nosniff` | MIMEスニッフィングを禁止（拡張子に反した実行を防止） |
-| `X-Frame-Options` | `SAMEORIGIN` | 他オリジンからのiframe埋め込みを禁止（クリックジャック対策）。同一オリジンのみ許可—PDFプレビュー（blob: iframe）のため |
+| `X-Frame-Options` | `DENY` | このページを一切iframeに埋め込ませない（クリックジャック対策を最大化）。PDFプレビューの `blob:` はローカル生成のためHTTPヘッダを持たず、子フレーム読込はCSP `frame-src blob:` で制御されるので影響なし |
 | `Referrer-Policy` | `no-referrer` | 遷移先にリファラーを送らない（プライバシー保護） |
 | `Permissions-Policy` | `geolocation=(), camera=(), microphone=()` | 位置情報・カメラ・マイクを全面無効化 |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPSを強制（1年間・サブドメイン含む） |
 | `Cross-Origin-Opener-Policy` | `same-origin` | 他オリジンの文書との browsing context group と opener の共有を制限 |
-| `Content-Security-Policy` | 自己オリジン（`'self'`）中心 | XSS・不正リソース読込のリスクを軽減。PDFプレビュー用に `frame-src`/`img-src` は `blob:` を許可 |
+| `Content-Security-Policy` | 自己オリジン（`'self'`）中心・`frame-ancestors 'none'` | XSS・不正リソース読込のリスクを軽減。`frame-ancestors 'none'` で被埋め込みを全面禁止（`X-Frame-Options: DENY` と一致）。PDFプレビュー用に `frame-src`/`img-src` は `blob:` を許可 |
 
 ---
 

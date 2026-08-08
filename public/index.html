@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#e8843d" />
+<meta name="description" content="介護認定申請書をブラウザ上で作成・PDF出力するツール（データは外部送信されません）" />
+<link rel="stylesheet" href="assets/styles.css" />
+<title>CareDocLib — 介護認定申請書作成アプリ</title>
+</head>
+<body>
+<header>
+  <h1>CareDocLib — 介護認定申請書作成アプリ</h1>
+  <span class="badge">サーバー処理なし / ブラウザ完結</span>
+  <span class="note" id="assets">読み込み中…</span>
+</header>
+<div id="banner"></div>
+<div id="disclaimer">
+  ⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
+</div>
+
+<div id="privacy">
+  <div class="privacy-head">
+    <span class="privacy-icon" aria-hidden="true">🔒</span>
+    <strong>あなたの入力データはこの端末から外に出ません</strong>
+  </div>
+  <ul class="privacy-points">
+    <li><span aria-hidden="true">✓</span> 入力した個人情報は外部サーバーへ<b>一切送信されません</b></li>
+    <li><span aria-hidden="true">✓</span> PDFは<b>このブラウザの中だけ</b>で作成されます</li>
+    <li><span aria-hidden="true">✓</span> 入力・保存したデータは<b>この端末の中（IndexedDB）にのみ保存</b>されます</li>
+  </ul>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+    <fieldset>
+      <legend>保存済み利用者</legend>
+      <label>利用者を選択</label>
+      <select id="memberSelect"><option value="">（新規入力）</option></select>
+      <div class="member-actions">
+        <button class="ghost flex1" id="saveMemberBtn" type="button">この利用者を保存/更新</button>
+        <button class="ghost btn-small" id="deleteMemberBtn" type="button" disabled>削除</button>
+      </div>
+      <p class="note note-tight">利用者データはこの端末内(IndexedDB)にのみ保存されます。外部送信はありません。</p>
+      <div class="member-actions">
+        <button class="ghost flex1" id="exportBtn" type="button">まとめて保存</button>
+        <button class="ghost flex1" id="importBtn" type="button">まとめて追加</button>
+      </div>
+      <input id="importFile" type="file" accept="application/json,.json" hidden />
+      <p class="note note-tight">「まとめて保存」：全利用者と共通設定を1つのJSONファイルに書き出します。「まとめて追加」：保存したJSONファイルから、既存を残したまま利用者を追加します（共通設定は上書き）。</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>利用者データ</legend>
+      <label>被保険者番号</label><input id="insuranceIdNumber" value="1310204536" />
+      <label>氏名</label><input id="name" value="田中 一郎" />
+      <label>フリガナ</label><input id="furigana" value="タナカ イチロウ" />
+      <label>生年月日（西暦年 / 月 / 日）</label>
+      <div class="row"><input id="birthYear" value="1943" /><input id="birthMonth" value="2" /><input id="birthDay" value="15" /></div>
+      <label>性別</label>
+      <select id="gender"><option value="">未選択</option><option value="男" selected>男</option><option value="女">女</option></select>
+      <label>住所</label><input id="address" value="東京都中央区青葉町 3-5-7" />
+      <label>電話番号</label><input id="phone" value="020-9123-4567" />
+      <label>要介護度</label>
+      <select id="careLevel">
+        <option value="">未選択</option>
+        <option>要支援1</option><option selected>要支援2</option>
+        <option>要介護1</option><option>要介護2</option><option>要介護3</option>
+        <option>要介護4</option><option>要介護5</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>有効期間 / 入所日</legend>
+      <label>開始（西暦年 / 月 / 日）</label>
+      <div class="row"><input id="startYear" value="2025" /><input id="startMonth" value="6" /><input id="startDay" value="1" /></div>
+      <label>終了（西暦年 / 月 / 日）</label>
+      <div class="row"><input id="endYear" value="2026" /><input id="endMonth" value="3" /><input id="endDay" value="31" /></div>
+      <label>入所（西暦年 / 月 / 日）</label>
+      <div class="row"><input id="institutionYear" value="2025" /><input id="institutionMonth" value="7" /><input id="institutionDay" value="1" /></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>共通設定</legend>
+      <label>調査場所 住所 / 電話</label>
+      <div class="row2"><input id="surveyAddress" value="東京都中央区高浜橋1-3-9 新町センタービル3F" /><input id="surveyPhone" value="020-0910-7703" /></div>
+      <label>施設名 / 電話</label>
+      <div class="row2"><input id="facilityName" value="高浜橋なごみケアホーム" /><input id="facilityPhone" value="020-0910-7703" /></div>
+      <label>入所施設 名称 / 住所</label>
+      <div class="row2"><input id="institutionName" value="すこやかメディカルセンター" /><input id="institutionAddress" value="東京都中央区東光川5-6-3" /></div>
+      <label>代行者 名称</label><input id="agentName" value="山田 太郎" />
+      <label>代行者 郵便 / 住所</label>
+      <div class="row2"><input id="agentPostal" value="104-8721" /><input id="agentAddress" value="東京都中央区高浜橋1-3-9 新町センタービル3F" /></div>
+      <label>代行者 電話</label><input id="agentPhone" value="020-0910-7703" />
+      <label>主治医 氏名</label><input id="doctorName" value="井上 直樹" />
+      <label>医療機関 名称</label><input id="clinicName" value="すこやかメディカルセンター" />
+      <label>医療機関 郵便 / 住所</label>
+      <div class="row2"><input id="clinicPostal" value="104-8739" /><input id="clinicAddress" value="東京都中央区東光川5-6-3" /></div>
+      <label>医療機関 電話</label><input id="clinicPhone" value="020-0802-8647" />
+      <div class="settings-save">
+        <button class="ghost flex1" id="saveSettingsBtn" type="button">共通設定を保存</button>
+      </div>
+      <p class="note note-tight">共通設定(事業所・代行者・主治医など)は1件だけ保存され、次回起動時に自動で復元されます。</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>申請日 / 変更理由</legend>
+      <label>申請日（西暦年 / 月 / 日）</label>
+      <div class="row"><input id="applyYear" value="2025" /><input id="applyMonth" value="8" /><input id="applyDay" value="6" /></div>
+      <label>変更申請理由（変更更新時のみ）</label>
+      <textarea id="changeReason"></textarea>
+    </fieldset>
+
+    <div class="actions">
+      <div class="actions-row">
+        <button class="primary" id="genBtn">PDFを生成してプレビュー</button>
+        <button class="ghost" id="dlBtn" disabled>保存</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <div class="preview">
+    <div id="previewBar"><button class="ghost" id="openTabBtn" type="button">新しいタブでPDFを開く</button></div>
+    <div id="previewPlaceholder">
+      <svg viewBox="0 0 120 140" width="120" height="140" aria-hidden="true">
+        <rect x="18" y="10" width="84" height="112" rx="8" fill="#fbf7f0" stroke="#e8843d" stroke-width="2.5"/>
+        <path d="M78 10 L102 34 L78 34 Z" fill="#fce4cf" stroke="#e8843d" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="32" y="52" width="56" height="6" rx="3" fill="#e8843d" opacity="0.55"/>
+        <rect x="32" y="68" width="56" height="6" rx="3" fill="#e8843d" opacity="0.35"/>
+        <rect x="32" y="84" width="40" height="6" rx="3" fill="#e8843d" opacity="0.35"/>
+        <circle cx="90" cy="104" r="20" fill="#e8843d"/>
+        <path d="M82 104 h16 M90 96 v16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <p class="ph-title">介護認定申請書プレビュー</p>
+      <p class="ph-sub">左のフォームを入力して<br>「PDFを生成してプレビュー」を押してください</p>
+    </div>
+    <iframe id="previewFrame" title="PDF" class="is-hidden"></iframe>
+  </div>
+</div>
+
+<!-- ライブラリはローカルから読み込む（同フォルダ配置・オフライン動作） -->
+<script src="assets/pdf-lib.min.js"></script>
+<script src="assets/fontkit.umd.min.js"></script>
+<!-- app.js を機能ごとに分割（読み込み順に依存） -->
+<!-- pdf: core → draw → export / storage: core → crud → seed / main -->
+<script src="assets/pdf-core.js"></script>
+<script src="assets/pdf-draw.js"></script>
+<script src="assets/pdf-export.js"></script>
+<script src="assets/storage-core.js"></script>
+<script src="assets/storage-crud.js"></script>
+<script src="assets/storage-export.js"></script>
+<script src="assets/storage-import.js"></script>
+<script src="assets/storage-seed.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+/* CareDoc — Amazon Quick ベージュ＋ピンク配色 */
+:root {
+  --bg: #f5efe6;          /* ベージュ背景 */
+  --card: #fbf7f0;        /* カード（やや明るいベージュ） */
+  --line: #e4d8c8;        /* 罫線（ベージュ寄り） */
+  --fg: #3f3a34;          /* 文字（ダークブラウン） */
+  --muted: #8a8178;       /* 補助テキスト */
+  --accent: #e8843d;      /* オレンジ（アクセント） */
+  --accent-weak: #fce4cf; /* 淡いオレンジ */
+  --ok: #d97528;          /* 成功系もオレンジ基調 */
+  --err: #c0392b;         /* エラー赤 */
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--card);
+}
+header h1 { font-size: 16px; margin: 0; color: var(--accent); }
+header .badge {
+  font-size: 11px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+#banner {
+  display: none;
+  background: var(--err);
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+#disclaimer {
+  background: var(--accent-weak);
+  border-bottom: 1px solid var(--line);
+  color: #7a5a3f;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 8px 20px;
+}
+
+/* 安全性（プライバシー）バナー: 入力データが端末内で完結することを明示（オレンジ＋ベージュ配色） */
+#privacy {
+  background: var(--accent-weak);      /* 淡いオレンジ地 */
+  border-bottom: 1px solid var(--line);
+  padding: 10px 20px;
+}
+#privacy .privacy-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);                /* オレンジ */
+  font-size: 13px;
+}
+#privacy .privacy-icon { font-size: 15px; line-height: 1; }
+#privacy .privacy-points {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+#privacy .privacy-points li {
+  font-size: 11.5px;
+  color: #7a5a3f;                      /* ダークブラウン寄り（免責文と同系） */
+  line-height: 1.6;
+}
+#privacy .privacy-points li span {
+  color: var(--accent);                /* オレンジのチェック */
+  font-weight: 700;
+  margin-right: 4px;
+}
+#privacy .privacy-points b { color: var(--accent); font-weight: 700; }
+.wrap {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 0;
+  height: calc(100vh - 120px);
+}
+.panel {
+  padding: 18px 18px 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: var(--bg);
+}
+.preview {
+  padding: 18px;
+  overflow: auto;
+  background: #ece2d3;
+  display: flex;
+  flex-direction: column;
+}
+.preview iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #fff;
+  border-radius: 6px;
+}
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 0 0 14px;
+  padding: 12px;
+  background: var(--card);
+}
+legend { color: var(--accent); font-size: 12px; padding: 0 6px; font-weight: 600; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
+input, select, textarea {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-weak);
+}
+textarea { resize: vertical; min-height: 52px; }
+.row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.primary { background: var(--accent); color: #fff; width: 100%; }
+.primary:hover { background: #d97528; }
+.ghost {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.ghost:hover { background: var(--accent-weak); }
+.ghost:disabled { border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+.actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--card);
+  padding: 12px 18px;
+  margin: 12px -18px 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2;
+}
+.actions-row { display: flex; gap: 8px; }
+.status { font-size: 12px; color: var(--muted); min-height: 16px; }
+.note { font-size: 11px; color: var(--muted); line-height: 1.5; }
+#previewBar { display: none; padding: 0 0 8px; }
+
+/* インラインstyleから移設したもの */
+.member-actions { display: flex; gap: 6px; margin-top: 8px; }
+.member-actions .flex1 { flex: 1; font-size: 12px; padding: 8px; }
+.btn-small { font-size: 12px; padding: 8px; }
+.note-tight { margin-top: 6px; }
+.settings-save { display: flex; gap: 6px; margin-top: 10px; }
+
+/* プレビュー生成前のプレースホルダー */
+#previewPlaceholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--muted);
+  text-align: center;
+  user-select: none;
+}
+#previewPlaceholder svg { opacity: 0.9; margin-bottom: 10px; }
+#previewPlaceholder .ph-title { font-size: 15px; font-weight: 700; color: var(--accent); margin: 0; }
+#previewPlaceholder .ph-sub { font-size: 12px; line-height: 1.7; margin: 4px 0 0; color: #9a8f80; }
+
+/* インラインstyle除去用の隠しクラス（CSP厳格化: style-src から 'unsafe-inline' を排除） */
+.is-hidden { display: none; }
