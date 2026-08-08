@@ -115,22 +115,20 @@ care-doc-lib/
 
 ## Cloudflare Pages へのデプロイ
 
-### 方法A: Git連携（自動デプロイ）
-
-1. このプロジェクトをGitHub等にpush
-2. Cloudflareダッシュボード → Workers & Pages → Create → Pages → Connect to Git
-3. リポジトリを選択し、ビルド設定を以下に:
-   - Framework preset: `None`
-- Build command: （空欄）
-- Build output directory: `public`
-4. Save and Deploy → 数十秒で `https://<project>.pages.dev` が発行される
-5. 以降、pushするたびに自動デプロイ
-
-### 方法B: Wrangler CLI
+### Wrangler CLI
 
 ```bash
+# Wrangler インストール
 npm install -g wrangler
-npx wrangler pages deploy public --project-name caredoc
+
+# Pages プロジェクト作成（初回のみ）
+npx wrangler pages project create care-doc-lib
+
+# デプロイ（毎回）
+npx wrangler pages deploy public --project-name=care-doc-lib
+
+# デプロイ状況確認
+npx wrangler pages deployment list --project-name=care-doc-lib
 
 ```
 
