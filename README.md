@@ -4,7 +4,7 @@ CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の PDF 生成部
 
 ## 公開デモURL
 
-🔗 [https://14ad7582.care-doc-lib.pages.dev](https://14ad7582.care-doc-lib.pages.dev)（Cloudflare Pages）
+🔗 [https://92438475.care-doc-lib.pages.dev](https://92438475.care-doc-lib.pages.dev)（Cloudflare Pages）
 
 ---
 
