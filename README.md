@@ -1,10 +1,10 @@
 # CareDocLib — 介護認定申請書作成アプリ（pdf-lib 版）
 
-CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の **PDF生成部分を、ブラウザだけで完結する pdf-lib(JavaScript) 構成に移植**し、データ保存・静的ホスティング対応までを行いました。 PDF生成もデータ保存もすべてブラウザ内で完結し（サーバー処理なし・データ外部送信なしのゼロデータ）、介護認定申請書テンプレPDFの座標上に入力データをレンダリングします。
+CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の PDF生成部分を、ブラウザだけで完結する pdf-lib(JavaScript) 構成に移植し、データ保存・静的ホスティング対応までを行いました PDF生成もデータ保存もすべてブラウザ内で完結し（サーバー処理なし・データ外部送信なしのゼロデータ）、介護認定申請書テンプレPDFの座標上に入力データをレンダリングします。
 
 ## 公開デモ
 
-🔗 **[https://f98be7a1.care-doc-lib.pages.dev](https://f98be7a1.care-doc-lib.pages.dev)**（Cloudflare Pages）
+🔗 [https://f98be7a1.care-doc-lib.pages.dev](https://f98be7a1.care-doc-lib.pages.dev)（Cloudflare Pages）
 
 
 ---
@@ -13,26 +13,26 @@ CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の **PDF生成�
 
 ```
 care-doc-lib/
-├── public/                      # ★デプロイ対象（これだけを配信する）
-│   ├── index.html               #   本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
-│   ├── _headers                 #   Cloudflare Pages/Netlify 用キャッシュ・セキュリティ設定
-│   ├── assets/                  #   アプリのコード・ライブラリ
-│   │   ├── styles.css           #     スタイル（ベージュ＋オレンジ配色）
-│   │   ├── pdf-core.js          #     共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
-│   │   ├── pdf-draw.js          #     描画(drawText/drawCircle/mapCareLevel)・PDF生成(generate)
-│   │   ├── pdf-export.js        #     PDFファイル名生成・ダウンロード・PDF系ボタン登録
-│   │   ├── storage-core.js      #     フィールド定義・IndexedDB基盤(openDB/tx/collectFields/applyFields)
-│   │   ├── storage-crud.js      #     利用者CRUD（保存/読込/削除）・共通設定の保存/復元
-│   │   ├── storage-export.js    #     まとめて保存（全データをJSONファイルへ書き出し）
-│   │   ├── storage-import.js    #     まとめて追加（JSONファイルから利用者を追加・検証）・ボタン登録(initIO)
-│   │   ├── storage-seed.js      #     初期データ(SEED)・起動(initStorage)・イベント登録
-│   │   ├── main.js              #     起動呼び出し（bootstrap() / initStorage()）
-│   │   ├── pdf-lib.min.js       #     PDF描画ライブラリ
-│   │   └── fontkit.umd.min.js   #     日本語フォント埋め込み用
-│   └── data/                    #   テンプレ・フォント・座標
-│       ├── template.pdf         #     介護認定申請書テンプレPDF（A4縦 595.32×842.04）
-│       ├── NotoSansJP-Regular.ttf #   埋め込み用日本語フォント（約5.4MB）
-│       └── positions.json       #     座標データ（47フィールド・元YAMLと同一値）
+├── public/                        # ★デプロイ対象（これだけを配信する）
+│   ├── index.html                 # 本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
+│   ├── _headers                   # Cloudflare Pages/Netlify 用キャッシュ・セキュリティ設定
+│   ├── assets/                    # アプリのコード・ライブラリ
+│   │   ├── styles.css             # スタイル（ベージュ＋オレンジ配色）
+│   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
+│   │   ├── pdf-draw.js            # 描画(drawText/drawCircle/mapCareLevel)・PDF生成(generate)
+│   │   ├── pdf-export.js          # PDFファイル名生成・ダウンロード・PDF系ボタン登録
+│   │   ├── storage-core.js        # フィールド定義・IndexedDB基盤(openDB/tx/collectFields/applyFields)
+│   │   ├── storage-crud.js        # 利用者CRUD（保存/読込/削除）・共通設定の保存/復元
+│   │   ├── storage-export.js      # まとめて保存（全データをJSONファイルへ書き出し）
+│   │   ├── storage-import.js      # まとめて追加（JSONファイルから利用者を追加・検証）・ボタン登録(initIO)
+│   │   ├── storage-seed.js        # 初期データ(SEED)・起動(initStorage)・イベント登録
+│   │   ├── main.js                # 起動呼び出し（bootstrap() / initStorage()）
+│   │   ├── pdf-lib.min.js         # PDF描画ライブラリ
+│   │   └── fontkit.umd.min.js     # 日本語フォント埋め込み用
+│   └── data/                      # テンプレ・フォント・座標
+│       ├── template.pdf           # 介護認定申請書テンプレPDF（A4縦 595.32×842.04）
+│       ├── NotoSansJP-Regular.ttf # 埋め込み用日本語フォント（約5.4MB）
+│       └── positions.json         # 座標データ（47フィールド・元YAMLと同一値）
 │
 ├── .gitignore
 └── README.md
@@ -58,11 +58,11 @@ care-doc-lib/
 
 ## 主な機能
 
-- **座標指定でのPDF生成**: テンプレPDFの47フィールドに、フォーム入力値を座標指定で描画
-- **年は西暦で入力・印字**（テンプレの年欄は元号印字のない自由記入欄）
+- 座標指定でのPDF生成: テンプレPDFの47フィールドに、フォーム入力値を座標指定で描画
+- 年は西暦で入力・印字（テンプレの年欄は元号印字のない自由記入欄）
 - 性別・要介護度は「〇」で該当欄を囲む
-- **データ保存（IndexedDB）**: 利用者（複数）＋共通設定（1件）を端末内に保存（後述）
-- **PDFファイル名**: 保存時に `YYYY年M月D日_氏名様_介護認定申請書.pdf` を自動生成（例: `2026年8月7日_田中一郎様_介護認定申請書.pdf`）。氏名の空白は詰め、入力があれば末尾に「様」を付与（未入力時は「無名」で「様」なし）
+- データ保存（IndexedDB）: 利用者（複数）＋共通設定（1件）を端末内に保存（後述）
+- PDFファイル名: 保存時に `YYYY年M月D日_氏名様_介護認定申請書.pdf` を自動生成（例: `2026年8月7日_田中一郎様_介護認定申請書.pdf`）。氏名の空白は詰め、入力があれば末尾に「様」を付与（未入力時は「無名」で「様」なし）
 
 ---
 
@@ -82,12 +82,12 @@ care-doc-lib/
 
 ## データ保存（IndexedDB・端末内のみ）
 
-入力データはブラウザの IndexedDB に保存され、**外部サーバーへは一切送信されません**（ゼロデータ維持）。 元の CareDocWeb の構造に合わせ、2種類に分けて保存します:
+入力データはブラウザの IndexedDB に保存され、外部サーバーへは一切送信されません（ゼロデータ維持）。 元の CareDocWeb の構造に合わせ、2種類に分けて保存します:
 
-- **利用者データ**（複数保存）: 氏名・被保険者番号・生年月日・住所・要介護度・有効期間・入所日など、人ごとに変わる項目。
+- 利用者データ（複数保存）: 氏名・被保険者番号・生年月日・住所・要介護度・有効期間・入所日など、人ごとに変わる項目。
   - 「保存済み利用者」のプルダウンで選択 → フォームに自動入力
   - 「この利用者を保存/更新」で登録・上書き、「削除」で削除
-- **共通設定**（1件のみ）: 調査場所・施設・代行者・主治医など事業所で共通の項目。
+- 共通設定（1件のみ）: 調査場所・施設・代行者・主治医など事業所で共通の項目。
   - 「共通設定を保存」で保存、次回起動時に自動復元
 
 保存先は DB 名 `caredoc`、ストア `members`（利用者）/ `settings`（共通設定）。 初回起動時、利用者データが空なら CareDocWeb のエクスポートデータ（利用者7名＋共通設定1件）を自動投入します（`storage-seed.js` の `seedIfEmpty()`）。 ブラウザのデータを消去すると保存内容も消えます。端末間の同期はありません。
@@ -98,8 +98,8 @@ care-doc-lib/
 
 「保存済み利用者」パネルの2つのボタンで、全データをJSONファイルに書き出し・取り込みできます（すべて端末内で完結・外部送信なし）。
 
-- **まとめて保存**（`storage-export.js`）: 全利用者＋共通設定を1つのJSONに書き出してダウンロード。ファイル名は `caredoc_backup_YYYY年M月D日.json`。
-- **まとめて追加**（`storage-import.js`）: 保存したJSONを検証して取り込み。利用者はIDを振り直して**既存に追加**（既存は上書きされず常に増える）、共通設定は取り込んだ内容で上書き。実行前に件数を確認するダイアログを表示。
+- まとめて保存（`storage-export.js`）: 全利用者＋共通設定を1つのJSONに書き出してダウンロード。ファイル名は `caredoc_backup_YYYY年M月D日.json`。
+- まとめて追加（`storage-import.js`）: 保存したJSONを検証して取り込み。利用者はIDを振り直して既存に追加（既存は上書きされず常に増える）、共通設定は取り込んだ内容で上書き。実行前に件数を確認するダイアログを表示。
 
 ---
 
@@ -118,12 +118,12 @@ care-doc-lib/
 ### 方法A: Git連携（自動デプロイ）
 
 1. このプロジェクトをGitHub等にpush
-2. Cloudflareダッシュボード → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+2. Cloudflareダッシュボード → Workers & Pages → Create → Pages → Connect to Git
 3. リポジトリを選択し、ビルド設定を以下に:
-   - **Framework preset**: `None`
-- **Build command**: （空欄）
-- **Build output directory**: `public`
-4. **Save and Deploy** → 数十秒で `https://<project>.pages.dev` が発行される
+   - Framework preset: `None`
+- Build command: （空欄）
+- Build output directory: `public`
+4. Save and Deploy → 数十秒で `https://<project>.pages.dev` が発行される
 5. 以降、pushするたびに自動デプロイ
 
 ### 方法B: Wrangler CLI
@@ -176,4 +176,4 @@ npx wrangler pages deploy public --project-name caredoc
 
 ## 免責事項
 
-⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した**非公式ツール**です。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
+⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
