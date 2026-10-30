@@ -7,9 +7,19 @@ const { PDFDocument, rgb } = PDFLib;
 let templateBytes = null, fontBytes = null, layout = null, lastPdfBytes = null, lastUrl = null;
 
 const $ = (id) => document.getElementById(id);
-const setStatus = (msg, ok=false) => { const s=$("status"); s.textContent=msg; s.style.color = ok ? "var(--ok)" : "var(--muted)"; };
-function showBanner(msg) { const b=$("banner"); b.textContent=msg; b.style.display="block"; }
-const v = (id) => $(id).value.trim();
+const setStatus = (msg, ok=false) => {
+  const s = $("status") || $("admin-status");
+  if (!s) return;
+  s.textContent = msg;
+  s.style.color = ok ? "var(--ok)" : "var(--muted)";
+};
+function showBanner(msg) {
+  const b = $("banner");
+  if (!b) return;
+  b.textContent = msg;
+  b.style.display = "block";
+}
+const v = (id) => $(id)?.value.trim() || "";
 
 async function tryFetch(url, asJson=false) {
   const res = await fetch(url);
@@ -24,10 +34,10 @@ async function bootstrap() {
     templateBytes = await tryFetch("data/template.pdf");
     fontBytes = await tryFetch("data/NotoSansJP-Regular.ttf");
     const n = Object.keys(layout.fields).length;
-    $("assets").textContent = "座標:OK(" + n + ") / テンプレ:OK / フォント:OK";
+    if ($("assets")) $("assets").textContent = "座標:OK(" + n + ") / テンプレ:OK / フォント:OK";
     setStatus("準備完了。『PDFを生成してプレビュー』を押してください", true);
   } catch (e) {
-    $("assets").textContent = "アセット読込エラー";
+    if ($("assets")) $("assets").textContent = "アセット読込エラー";
     showBanner("アセット読込エラー: " + e.message + " — ローカルサーバー経由で開いてください（file:// では動きません）。");
   }
 }

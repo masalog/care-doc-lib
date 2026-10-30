@@ -47,18 +47,18 @@ src-tauri/target/release/bundle/
 ```
 care-doc-lib/
 ├── public/                        # フロントエンド資産（Tauriから読み込み）
-│   ├── index.html                 # 本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
+│   ├── index.html                 # PDF作成画面（利用者選択 → PDF生成・プレビュー）
+│   ├── admin.html                 # 利用者・共通設定の管理画面
 │   ├── assets/                    # アプリのコード・ライブラリ
-│   │   ├── styles.css             # スタイル（ベージュ＋オレンジ配色）
+│   │   ├── style.css              # 画面共通スタイル
+│   │   ├── admin.js               # 管理画面の利用者CRUD・共通設定
 │   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
 │   │   ├── pdf-draw.js            # 描画(drawText/drawCircle/mapCareLevel)・PDF生成(generate)
 │   │   ├── pdf-export.js          # PDFファイル名生成・ダウンロード・PDF系ボタン登録
 │   │   ├── storage-core.js        # フィールド定義・IndexedDB基盤(openDB/tx/collectFields/applyFields)
 │   │   ├── storage-crud.js        # 利用者CRUD（保存/読込/削除）・共通設定の保存/復元
-│   │   ├── storage-export.js      # まとめて保存（全データをJSONファイルへ書き出し）
-│   │   ├── storage-import.js      # まとめて追加（JSONファイルから利用者を追加・検証）・ボタン登録(initIO)
-│   │   ├── storage-seed.js        # 初期データ(SEED)・起動(initStorage)・イベント登録
-│   │   ├── main.js                # 起動呼び出し（bootstrap() / initStorage()）
+│   │   ├── storage-seed.js        # 初期データ(SEED)・PDF画面のDB初期化
+│   │   ├── main.js                # PDF画面の起動
 │   │   ├── pdf-lib.min.js         # PDF描画ライブラリ
 │   │   └── fontkit.umd.min.js     # 日本語フォント埋め込み用
 │   └── data/                      # テンプレ・フォント・座標
@@ -84,15 +84,15 @@ care-doc-lib/
 ## 起動後の確認
 
 - 上部に `座標:OK(47) / テンプレ:OK / フォント:OK`、下部に「準備完了」→ 読込成功
-- 生成前は右側にプレースホルダー（書類アイコン＋案内文）を表示
-- 「PDFを生成してプレビュー」→ 右にPDF表示（出ない場合は「新しいタブでPDFを開く」）
-- エラー時は画面上部に赤帯で内容表示
+- 生成前はフォーム下部に案内文を表示
+- 「PDF生成・プレビュー」→ フォーム下部にPDFを表示（表示されない場合は「新しいタブで開く」）
+- エラー時は画面内の通知欄に内容を表示
 
 ---
 
 ## 主な機能
 
-- 座標指定でのPDF生成: テンプレPDFの47フィールドに、フォーム入力値を座標指定で描画
+- 座標指定でのPDF生成: 47項目の座標データを使い、対応する項目に入力値や選択結果を描画
 - 年は西暦で入力・印字（テンプレの年欄は元号印字のない自由記入欄）
 - 性別・要介護度は「〇」で該当欄を囲む
 - データ保存（IndexedDB）: 利用者（複数）＋共通設定（1件）を端末内に保存（後述）
@@ -100,40 +100,15 @@ care-doc-lib/
 
 ---
 
-## 配色（ベージュ＋オレンジ）
-
-`assets/styles.css` の CSS 変数で管理:
-
-| 用途 | 色 |
-| --- | --- |
-| 背景 | ベージュ `#f5efe6` |
-| カード | 明るいベージュ `#fbf7f0` |
-| アクセント（ボタン・見出し・フォーカス枠） | オレンジ `#e8843d` |
-| 淡いアクセント（免責バー・ホバー） | 淡オレンジ `#fce4cf` |
-| 文字 | ダークブラウン `#3f3a34` |
-
----
-
 ## データ保存（IndexedDB・端末内のみ）
 
-入力データはブラウザの IndexedDB に保存され、外部サーバーへは一切送信されません（ゼロデータ維持）。 元の CareDocWeb の構造に合わせ、2種類に分けて保存します:
+PDF作成画面（`index.html`）と管理画面（`admin.html`）の2画面構成です。利用者データと共通設定は同じブラウザの IndexedDB を共有し、外部サーバーへ送信しません。
 
-- 利用者データ（複数保存）: 氏名・被保険者番号・生年月日・住所・要介護度・有効期間・入所日など、人ごとに変わる項目。
-  - 「保存済み利用者」のプルダウンで選択 → フォームに自動入力
-  - 「この利用者を保存/更新」で登録・上書き、「削除」で削除
-- 共通設定（1件のみ）: 調査場所・施設・代行者・主治医など事業所で共通の項目。
-  - 「共通設定を保存」で保存、次回起動時に自動復元
+- 管理画面では利用者の登録・編集・削除と共通設定の保存ができます。
+- PDF作成画面では登録済み利用者を選び、申請日・変更理由を指定してPDFを生成します。
+- 共通設定は1件を保存し、PDF作成画面で自動的に使用します。
 
 保存先は DB 名 `caredoc`、ストア `members`（利用者）/ `settings`（共通設定）。 初回起動時、利用者データが空なら CareDocWeb のエクスポートデータ（利用者7名＋共通設定1件）を自動投入します（`storage-seed.js` の `seedIfEmpty()`）。 ブラウザのデータを消去すると保存内容も消えます。端末間の同期はありません。
-
----
-
-## JSONファイルでの一括保存・追加
-
-「保存済み利用者」パネルの2つのボタンで、全データをJSONファイルに書き出し・取り込みできます（すべて端末内で完結・外部送信なし）。
-
-- まとめて保存（`storage-export.js`）: 全利用者＋共通設定を1つのJSONに書き出してダウンロード。ファイル名は `caredoc_backup_YYYY年M月D日.json`。
-- まとめて追加（`storage-import.js`）: 保存したJSONを検証して取り込み。利用者はIDを振り直して既存に追加（既存は上書きされず常に増える）、共通設定は取り込んだ内容で上書き。実行前に件数を確認するダイアログを表示。
 
 ---
 
@@ -178,6 +153,685 @@ care-doc-lib/
 
 ---
 
+## 今後の課題
+
+### 目指すアーキテクチャ
+
+```text
+DB
+ ↓
+Entity
+ ↓
+Value Object
+ ↓
+DTO
+ ↓
+Mapper
+ ↓
+Repository
+ ↓
+Service
+ ↓
+Controller
+ ↓
+View
+```
+
+責務分離を徹底し、長期保守・機能追加・永続化方式変更に強い構成を目指す。
+
+---
+
+### 第1フェーズ：データ・ドメイン設計（最優先）
+
+#### 1. DB構造整理
+
+現在の IndexedDB スキーマを棚卸しし、項目・責務・関連性を明確化する。
+
+対象:
+
+```text
+members
+settings
+```
+
+成果物:
+
+- ER図
+- テーブル定義書
+- 項目一覧
+- データ辞書
+
+---
+
+#### 2. Entity定義
+
+業務上の核となるエンティティを定義する。
+
+対象:
+
+```text
+MemberEntity
+SettingsEntity
+ApplicationEntity
+```
+
+期待効果:
+
+- 業務ルールの集約
+- データ構造の明確化
+- ドメイン知識のコード化
+
+---
+
+#### 3. Value Object定義
+
+業務上意味を持つ値を独立したオブジェクトとして定義する。
+
+対象候補:
+
+```text
+PhoneNumber
+
+PostalCode
+
+InsuranceIdNumber
+
+CareLevel
+
+ApplicationDate
+```
+
+期待効果:
+
+```text
+不正値混入防止
+
+バリデーション集約
+
+ドメイン知識の可視化
+
+Entityの責務整理
+```
+
+---
+
+#### 4. DTO定義
+
+レイヤー間のデータ受け渡しを標準化する。
+
+対象:
+
+```text
+MemberDTO
+
+SettingsDTO
+
+ApplicationDTO
+
+PdfDataDTO
+```
+
+期待効果:
+
+- レイヤー間の疎結合化
+- ViewとDomainの分離
+- PDF生成処理の単純化
+
+---
+
+#### 5. Mapper定義
+
+Entity・DTO・永続化データの変換処理を集約する。
+
+対象:
+
+```text
+MemberMapper
+
+SettingsMapper
+
+ApplicationMapper
+
+PdfDataMapper
+```
+
+責務:
+
+```text
+Entity ←→ DTO
+
+DTO ←→ Repository
+
+DTO ←→ PDFデータ
+```
+
+期待効果:
+
+```text
+変換処理の一元管理
+
+Service肥大化防止
+
+テスト容易化
+```
+
+---
+
+### 第2フェーズ：アーキテクチャ再設計
+
+#### 6. Repository層導入
+
+永続化処理を集約する。
+
+対象:
+
+```text
+IMemberRepository
+ISettingsRepository
+
+IndexedDbMemberRepository
+IndexedDbSettingsRepository
+```
+
+期待効果:
+
+- IndexedDB依存の隔離
+- SQLite移行容易化
+- テスト容易化
+
+---
+
+#### 7. Service層導入
+
+業務ロジックを集約する。
+
+対象:
+
+```text
+MemberService
+SettingsService
+PdfService
+```
+
+責務例:
+
+```text
+PDF生成データ構築
+
+ファイル名生成
+
+業務ルール適用
+
+DTO変換
+```
+
+---
+
+#### 8. Controller層導入
+
+UIイベント処理を分離する。
+
+対象:
+
+```text
+AdminController
+
+PdfController
+```
+
+責務:
+
+```text
+ユーザー操作受付
+
+Service呼び出し
+
+View更新
+```
+
+---
+
+#### 9. 契約クラス（Interface相当）導入
+
+JavaScriptでは抽象クラス風の実装で対応する。
+
+対象:
+
+```text
+IMemberRepository
+ISettingsRepository
+
+IMemberService
+ISettingsService
+IPdfService
+
+IAdminController
+IPdfController
+```
+
+期待効果:
+
+```text
+実装交換容易化
+
+責務明確化
+
+保守性向上
+```
+
+---
+
+### 第3フェーズ：品質向上
+
+#### 10. バリデーション統一
+
+入力検証を一元管理する。
+
+対象:
+
+```text
+利用者情報
+
+共通設定
+
+申請情報
+```
+
+例:
+
+```text
+必須チェック
+
+日付妥当性
+
+電話番号形式
+
+郵便番号形式
+```
+
+---
+
+#### 11. 例外設計
+
+例外分類とハンドリング方針を整備する。
+
+例:
+
+```text
+ValidationException
+
+BusinessException
+
+InfrastructureException
+```
+
+対象:
+
+```text
+入力エラー
+
+PDF生成失敗
+
+DB操作失敗
+
+アセット読込失敗
+```
+
+---
+
+#### 12. ログ設計
+
+障害解析と運用保守の効率化を図る。
+
+対象:
+
+```text
+利用者登録
+
+利用者更新
+
+利用者削除
+
+PDF生成
+
+設定変更
+
+DB移行
+```
+
+---
+
+#### 13. 単体テスト導入
+
+各コンポーネントを個別に検証する。
+
+対象:
+
+```text
+Entity
+
+Value Object
+
+DTO
+
+Mapper
+
+Service
+
+Repository
+
+PDF関連ユーティリティ
+```
+
+テスト例:
+
+```text
+MemberEntity生成
+
+PhoneNumber妥当性
+
+CareLevel変換
+
+PdfDataDTO生成
+
+Mapper変換
+
+ファイル名生成
+```
+
+---
+
+#### 14. 結合テスト導入
+
+レイヤー間の連携を検証する。
+
+対象:
+
+```text
+Controller
+ ↓
+Service
+ ↓
+Repository
+ ↓
+IndexedDB
+```
+
+シナリオ例:
+
+```text
+利用者登録 → 保存 → 読込
+
+共通設定保存 → 読込
+
+利用者選択 → PDF生成
+
+PDF生成データ構築
+```
+
+---
+
+#### 15. E2Eテスト導入
+
+利用者視点で業務フロー全体を検証する。
+
+候補:
+
+```text
+Playwright
+```
+
+シナリオ例:
+
+```text
+利用者登録
+ ↓
+共通設定保存
+ ↓
+PDF作成画面へ移動
+ ↓
+利用者選択
+ ↓
+申請日入力
+ ↓
+PDF生成
+ ↓
+プレビュー確認
+ ↓
+ダウンロード確認
+```
+
+---
+
+### 第4フェーズ：永続化強化
+
+#### 16. SQLite対応
+
+永続化基盤の強化を検討する。
+
+候補:
+
+```text
+SQLite
+```
+
+期待効果:
+
+```text
+データ管理安定化
+
+バックアップ容易化
+
+Tauriとの高い親和性
+```
+
+---
+
+#### 17. Migration戦略策定
+
+スキーマ変更管理方式を整備する。
+
+例:
+
+```text
+Schema Version 1
+ ↓
+Schema Version 2
+ ↓
+Schema Version 3
+```
+
+対象:
+
+```text
+IndexedDBスキーマ更新
+
+SQLite移行
+
+項目追加対応
+```
+
+---
+
+#### 18. Flyway相当の運用導入
+
+SQLite採用後のスキーマ管理を標準化する。
+
+候補:
+
+```text
+Flyway
+
+独自Migration機構
+```
+
+目的:
+
+```text
+スキーマ変更履歴管理
+
+自動アップグレード
+
+バージョン管理
+```
+
+---
+
+### 第5フェーズ：運用・セキュリティ
+
+#### 19. バックアップ戦略
+
+利用者データ保全を強化する。
+
+候補:
+
+```text
+JSONエクスポート
+
+SQLiteバックアップ
+
+ZIP出力
+```
+
+---
+
+#### 20. セキュリティ強化
+
+個人情報保護対策を整備する。
+
+対象:
+
+```text
+氏名
+
+住所
+
+電話番号
+
+生年月日
+
+被保険者番号
+```
+
+検討事項:
+
+```text
+SQLite暗号化
+
+バックアップ暗号化
+
+ローカルデータ保護
+```
+
+---
+
+#### 21. ADR（Architecture Decision Record）導入
+
+重要な設計判断を文書化する。
+
+管理例:
+
+```text
+ADR-001
+なぜ IndexedDB を採用したか
+
+ADR-002
+なぜ Repository パターンを採用したか
+
+ADR-003
+なぜ SQLite へ移行するのか
+
+ADR-004
+なぜ pdf-lib を継続利用するのか
+
+ADR-005
+なぜ Tauri を採用したのか
+```
+
+期待効果:
+
+```text
+設計意図の共有
+
+将来の保守性向上
+
+技術選定理由の可視化
+
+属人化防止
+```
+
+ディレクトリ例:
+
+```text
+docs/
+└── adr/
+    ├── ADR-001-indexeddb.md
+    ├── ADR-002-repository.md
+    ├── ADR-003-sqlite.md
+    ├── ADR-004-pdf-lib.md
+    └── ADR-005-tauri.md
+```
+
+---
+
+#### 22. フォルダ構成再編
+
+責務ごとにコードを整理する。
+
+```text
+assets/
+├── controllers/
+├── services/
+├── repositories/
+├── interfaces/
+├── entities/
+├── value-objects/
+├── dtos/
+├── mappers/
+├── views/
+├── pdf/
+└── shared/
+```
+
+---
+
+#### 23. PDFエンジン疎結合化
+
+DOM依存を排除し、Service経由でPDF生成を行う。
+
+現状:
+
+```text
+DOM
+ ↓
+pdf-lib
+```
+
+目標:
+
+```text
+Controller
+ ↓
+Service
+ ↓
+PdfService
+ ↓
+pdf-lib
+```
+
+期待効果:
+
+```text
+テスト容易性向上
+
+保守性向上
+
+ライブラリ差し替え容易化
+
+責務分離の徹底
+```
+---
+
 ## 免責事項
 
-⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
+ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。

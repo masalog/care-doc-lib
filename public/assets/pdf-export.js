@@ -8,7 +8,7 @@ function buildFileName() {
   const d = String(now.getDate()).padStart(2, "0");
   const dateStr = `${y}年${Number(m)}月${Number(d)}日`;
   // 氏名の前後空白を除去し、名前中の空白は詰める。入力があれば「様」を付ける（未入力なら「無名」）
-  const raw = v("name").replace(/\s+/g, "");
+  const raw = String(activeMember?.name || v("name")).replace(/\s+/g, "");
   const name = raw ? raw + "様" : "無名";
   return `${dateStr}_${name}_介護認定申請書.pdf`;
 }
@@ -22,9 +22,14 @@ function download() {
   a.click();
 }
 
-$("genBtn").addEventListener("click", () => generate().catch(e => {
-  console.error(e); setStatus("エラー: " + e.message);
-  showBanner("PDF生成エラー: " + e.message);
-}));
-$("dlBtn").addEventListener("click", download);
-$("openTabBtn").addEventListener("click", () => { if (lastUrl) window.open(lastUrl, "_blank"); });
+if ($("genBtn")) {
+  $("genBtn").addEventListener("click", () => generate().catch(e => {
+    console.error(e);
+    setStatus("エラー: " + e.message);
+    showBanner("PDF生成エラー: " + e.message);
+  }));
+}
+if ($("dlBtn")) $("dlBtn").addEventListener("click", download);
+if ($("openTabBtn")) $("openTabBtn").addEventListener("click", () => {
+  if (lastUrl) window.open(lastUrl, "_blank");
+});

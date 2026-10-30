@@ -15,6 +15,8 @@ const SETTINGS_FIELDS = [
 ];
 
 let db = null;
+let activeMember = null;
+let activeSettings = {};
 
 function openDB() {
   return new Promise((resolve, reject) => {

@@ -44,11 +44,10 @@ async function initStorage() {
     await seedIfEmpty();   // 初回のみ CareDocWeb と同じ初期データを投入
     await loadMemberList();
     loadSettings();  // 起動時に共通設定を自動復元
-    $("memberSelect").addEventListener("change", (e) => loadMember(e.target.value));
-    $("saveMemberBtn").addEventListener("click", saveMember);
-    $("deleteMemberBtn").addEventListener("click", deleteMember);
-    $("saveSettingsBtn").addEventListener("click", saveSettings);
-    initIO();  // JSONインポート/エクスポートのボタン登録
+    if ($("memberSelect")) $("memberSelect").addEventListener("change", (e) => loadMember(e.target.value));
+    if ($("saveMemberBtn")) $("saveMemberBtn").addEventListener("click", saveMember);
+    if ($("deleteMemberBtn")) $("deleteMemberBtn").addEventListener("click", deleteMember);
+    if ($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", saveSettings);
   } catch (e) {
     console.warn("IndexedDB初期化失敗:", e);
     setStatus("データ保存機能が使えません: " + e.message);

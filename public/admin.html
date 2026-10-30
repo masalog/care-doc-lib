@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDocLib - 管理画面</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-title-row">
+            <h1>CareDocLib 管理画面</h1>
+            <span class="header-notice">利用者データと共通設定はこの端末に保存されます</span>
+            <a href="index.html" class="admin-link">→ PDF生成に戻る</a>
+        </div>
+        <p>利用者データ・共通設定の管理</p>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="showSection('members', this)">利用者管理</button>
+        <button class="nav-btn" onclick="showSection('settings', this)">共通設定</button>
+    </nav>
+
+    <main>
+        <!-- 利用者管理セクション -->
+        <section id="section-members" class="section">
+            <h2>利用者一覧</h2>
+            <button class="btn btn-success" onclick="showMemberForm()">＋ 新規登録</button>
+            <div id="member-list"></div>
+
+            <!-- 利用者登録・編集フォーム -->
+            <div id="member-form-container" class="hidden">
+                <h3 id="member-form-title">利用者登録</h3>
+                <form id="member-form">
+                    <input type="hidden" id="member-id" name="id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="m-insurance">被保険者番号</label>
+                            <input type="text" id="m-insurance" name="insuranceIdNumber">
+                        </div>
+                        <div class="form-group">
+                            <label for="m-name">氏名 *</label>
+                            <input type="text" id="m-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-furigana">フリガナ</label>
+                            <input type="text" id="m-furigana" name="furigana">
+                        </div>
+                    </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="m-birth-year">生年（西暦）</label>
+                                <select id="m-birth-year" name="birthYear"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="m-birth-month">生月</label>
+                                <select id="m-birth-month" name="birthMonth"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="m-birth-day">生日</label>
+                                <select id="m-birth-day" name="birthDay"></select>
+                            </div>
+                        </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="m-gender">性別</label>
+                            <select id="m-gender" name="gender">
+                                <option value="">--</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-care-level">介護度</label>
+                            <select id="m-care-level" name="careLevel">
+                                <option value="">--</option>
+                                <option value="要支援1">要支援1</option>
+                                <option value="要支援2">要支援2</option>
+                                <option value="要介護1">要介護1</option>
+                                <option value="要介護2">要介護2</option>
+                                <option value="要介護3">要介護3</option>
+                                <option value="要介護4">要介護4</option>
+                                <option value="要介護5">要介護5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="m-address">住所</label>
+                            <input type="text" id="m-address" name="address">
+                        </div>
+                        <div class="form-group">
+                            <label for="m-phone">電話番号</label>
+                            <input type="text" id="m-phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="m-start-year">認定開始年</label>
+                            <select id="m-start-year" name="startYear"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-start-month">開始月</label>
+                            <select id="m-start-month" name="startMonth"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-start-day">開始日</label>
+                            <select id="m-start-day" name="startDay"></select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="m-end-year">認定終了年</label>
+                            <select id="m-end-year" name="endYear"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-end-month">終了月</label>
+                            <select id="m-end-month" name="endMonth"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-end-day">終了日</label>
+                            <select id="m-end-day" name="endDay"></select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="m-inst-year">施設入所年</label>
+                            <select id="m-inst-year" name="institutionYear"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-inst-month">入所月</label>
+                            <select id="m-inst-month" name="institutionMonth"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-inst-day">入所日</label>
+                            <select id="m-inst-day" name="institutionDay"></select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="saveMember()">保存</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideMemberForm()">キャンセル</button>
+                    </div>
+                </form>
+            </div>
+            <div id="member-message" class="message"></div>
+            <div id="admin-status" class="status" role="status"></div>
+        </section>
+
+        <!-- 共通設定セクション -->
+        <section id="section-settings" class="section hidden">
+            <h2>共通設定（事業所情報）</h2>
+            <form id="settings-form">
+                <h3>調査連絡先</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-survey-address">住所</label>
+                        <input type="text" id="s-survey-address" name="surveyAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-survey-phone">電話番号</label>
+                        <input type="text" id="s-survey-phone" name="surveyPhone">
+                    </div>
+                </div>
+                <h3>入所施設</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-facility-name">施設名</label>
+                        <input type="text" id="s-facility-name" name="facilityName">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-facility-phone">電話番号</label>
+                        <input type="text" id="s-facility-phone" name="facilityPhone">
+                    </div>
+                </div>
+                <h3>医療機関</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-institution-name">医療機関名</label>
+                        <input type="text" id="s-institution-name" name="institutionName">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-institution-address">住所</label>
+                        <input type="text" id="s-institution-address" name="institutionAddress">
+                    </div>
+                </div>
+                <h3>代理人</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-agent-name">氏名</label>
+                        <input type="text" id="s-agent-name" name="agentName">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-agent-postal">郵便番号</label>
+                        <input type="text" id="s-agent-postal" name="agentPostal">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-agent-address">住所</label>
+                        <input type="text" id="s-agent-address" name="agentAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-agent-phone">電話番号</label>
+                        <input type="text" id="s-agent-phone" name="agentPhone">
+                    </div>
+                </div>
+                <h3>主治医・クリニック</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-doctor-name">主治医名</label>
+                        <input type="text" id="s-doctor-name" name="doctorName">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-clinic-name">医療機関名</label>
+                        <input type="text" id="s-clinic-name" name="clinicName">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="s-clinic-postal">郵便番号</label>
+                        <input type="text" id="s-clinic-postal" name="clinicPostal">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-clinic-address">住所</label>
+                        <input type="text" id="s-clinic-address" name="clinicAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-clinic-phone">電話番号</label>
+                        <input type="text" id="s-clinic-phone" name="clinicPhone">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="saveSettings()">設定を保存</button>
+            </form>
+            <div id="settings-message" class="message"></div>
+        </section>
+    </main>
+
+    <footer>
+        <ul>
+            <li>本テンプレートは、東京都中央区が公開している介護認定申請書の様式を基に作成したものです。</li>
+            <li>個人番号、医療保険、特定疾病名の項目は、自動転記の対象としておりません。</li>
+        </ul>
+        <p class="footer-credit">© 2026 masalog — <a href="https://github.com/masalog" target="_blank" rel="noopener">GitHub</a></p>
+    </footer>
+
+    <script src="assets/pdf-lib.min.js"></script>
+    <script src="assets/pdf-core.js"></script>
+    <script src="assets/storage-core.js"></script>
+    <script src="assets/storage-seed.js"></script>
+    <script src="assets/admin.js"></script>
+</body>
+</html>

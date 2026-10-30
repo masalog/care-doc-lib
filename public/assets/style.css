@@ -1,0 +1,457 @@
+/* ── Noto Sans JP ───────────────────────── */
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../data/NotoSansJP-Regular.ttf') format('truetype');
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    background-color: #1d4ed8;
+}
+
+body {
+    font-family:
+        "Noto Sans JP",
+        "Yu Gothic",
+        "Meiryo",
+        sans-serif;
+    background-color: #ffffff;
+    color: #333;
+    line-height: 1.6;
+    zoom: 1.15;
+}
+
+header {
+    background-color: #1d4ed8;
+    color: white;
+    padding: 20px 40px;
+    position: relative;
+}
+
+header h1 {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+header p {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-catchcopy {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: bold;
+    color: white;
+}
+
+.header-notice {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: bold;
+    color: white;
+}
+
+.admin-link {
+    margin-left: auto;
+    white-space: nowrap;
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.admin-link:hover {
+    color: white;
+}
+
+nav {
+    background-color: #0435bf;
+    padding: 10px 40px;
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #bdc3c7;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background-color: #1d4ed8;
+    color: white;
+}
+
+.nav-btn.active {
+    background-color: #1d4ed8;
+    color: white;
+}
+
+main {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.section {
+    padding: 30px;
+}
+
+.hidden {
+    display: none;
+}
+
+h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #e67e22;
+    border-bottom: 2px solid #1d4ed8;
+    padding-bottom: 8px;
+}
+
+h3 {
+    font-size: 16px;
+    margin: 20px 0 10px;
+    color: #555;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #27ae60;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #219a52;
+}
+
+.btn-success {
+    background-color: #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #219a52;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn-edit {
+    background-color: #f39c12;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-edit:hover {
+    background-color: #d68910;
+}
+
+.message {
+    margin-top: 15px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.message.success {
+    background-color: #fdebd0;
+    color: #784212;
+    border: 1px solid #f5cba7;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* 利用者一覧テーブル */
+.member-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.member-table th,
+.member-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.member-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #555;
+}
+
+.member-table tr:hover {
+    background-color: #f1f8ff;
+}
+
+.member-table .actions {
+    display: flex;
+    gap: 5px;
+}
+
+
+/* PDF生成中メッセージ */
+.pdf-action-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pdf-status {
+    color: #1d4ed8;
+    font-size: 14px;
+    display: none;
+    white-space: nowrap;
+}
+
+.pdf-status.loading::before {
+    content: " ";
+}
+
+.pdf-status.success {
+    color: #27ae60;
+}
+
+.pdf-status.error {
+    color: #e74c3c;
+}
+
+#login-overlay {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+#login-overlay main {
+    flex: 1;
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px;
+    width: 400px;
+}
+
+/* フッター */
+footer {
+    background-color: #1d4ed8;
+    color: white;
+    padding: 20px 40px;
+    margin-top: 30px;
+    margin-bottom: 0;
+}
+
+footer ul {
+    list-style: none;
+    padding: 0;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+footer ul li {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-bottom: 6px;
+    padding-left: 1em;
+    text-indent: -1em;
+}
+
+footer ul li::before {
+    content: "※ ";
+}
+
+.footer-credit {
+    max-width: 900px;
+    margin: 12px auto 0;
+    font-size: 13px;
+    opacity: 0.85;
+    text-align: center;
+}
+
+.footer-credit a {
+    color: white;
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .header-title-row {
+        flex-wrap: wrap;          /* ← 横並びを折り返し可能にする */
+        align-items: flex-start;  /* ← 上揃えにする */
+    }
+
+    .header-title-row h1 {
+        flex: 1 1 100%;           /* ← h1 を1行使う */
+        min-width: 0;             /* ← はみ出し防止 */
+    }
+
+    .header-catchcopy {
+        flex-basis: 100%;         /* ← キャッチコピーも1行使う */
+    }
+
+    .admin-link {
+        margin-left: 0;           /* ← 右上固定を解除 */
+        white-space: normal;      /* ← 折り返し可能にする */
+    }
+}
+
+/* ========================================
+   PDFプレビュー
+======================================== */
+
+.preview {
+    margin-top: 20px;
+}
+
+#previewBar {
+    display: none;
+    margin-bottom: 10px;
+}
+
+#previewFrame {
+    width: 100%;
+    height: 900px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+#previewPlaceholder {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #1d4ed8;
+}
+
+#banner {
+    display: none;
+    background: #fdebd0;
+    border: 1px solid #f5cba7;
+    color: #784212;
+    padding: 12px 16px;
+    margin: 20px;
+    border-radius: 4px;
+}
+
+.badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #27ae60;
+    color: #fff;
+    font-size: 12px;
+}
+
+.note {
+    font-size: 13px;
+    color: #555;
+}
