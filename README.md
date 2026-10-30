@@ -155,43 +155,255 @@ PDF作成画面（`index.html`）と管理画面（`admin.html`）の2画面構�
 
 ## 今後の課題
 
-### Controller / Service / Repository 構成への再設計
-
-画面操作、業務ロジック、データアクセスを分離し、責務を明確化する。
+### 目指すアーキテクチャ
 
 ```text
-Controller
-    ↓
-Service
-    ↓
+DB
+ ↓
+Entity
+ ↓
+Value Object
+ ↓
+DTO
+ ↓
+Mapper
+ ↓
 Repository
-    ↓
-IndexedDB
+ ↓
+Service
+ ↓
+Controller
+ ↓
+View
+```
+
+責務分離を徹底し、長期保守・機能追加・永続化方式変更に強い構成を目指す。
+
+---
+
+### 第1フェーズ：データ・ドメイン設計（最優先）
+
+#### 1. DB構造整理
+
+現在の IndexedDB スキーマを棚卸しし、項目・責務・関連性を明確化する。
+
+対象:
+
+```text
+members
+settings
+```
+
+成果物:
+
+- ER図
+- テーブル定義書
+- 項目一覧
+- データ辞書
+
+---
+
+#### 2. Entity定義
+
+業務上の核となるエンティティを定義する。
+
+対象:
+
+```text
+MemberEntity
+SettingsEntity
+ApplicationEntity
 ```
 
 期待効果:
 
-- 保守性向上
-- 可読性向上
-- テスト容易性向上
-- SQLite移行の容易化
+- 業務ルールの集約
+- データ構造の明確化
+- ドメイン知識のコード化
 
 ---
 
-### 契約クラス（Interface相当）の導入
+#### 3. Value Object定義
 
-JavaScriptでは抽象クラス風の契約クラスを利用し、
-各レイヤーの責務と公開APIを明確化する。
+業務上意味を持つ値を独立したオブジェクトとして定義する。
 
-例:
+対象候補:
+
+```text
+PhoneNumber
+
+PostalCode
+
+InsuranceIdNumber
+
+CareLevel
+
+ApplicationDate
+```
+
+期待効果:
+
+```text
+不正値混入防止
+
+バリデーション集約
+
+ドメイン知識の可視化
+
+Entityの責務整理
+```
+
+---
+
+#### 4. DTO定義
+
+レイヤー間のデータ受け渡しを標準化する。
+
+対象:
+
+```text
+MemberDTO
+
+SettingsDTO
+
+ApplicationDTO
+
+PdfDataDTO
+```
+
+期待効果:
+
+- レイヤー間の疎結合化
+- ViewとDomainの分離
+- PDF生成処理の単純化
+
+---
+
+#### 5. Mapper定義
+
+Entity・DTO・永続化データの変換処理を集約する。
+
+対象:
+
+```text
+MemberMapper
+
+SettingsMapper
+
+ApplicationMapper
+
+PdfDataMapper
+```
+
+責務:
+
+```text
+Entity ←→ DTO
+
+DTO ←→ Repository
+
+DTO ←→ PDFデータ
+```
+
+期待効果:
+
+```text
+変換処理の一元管理
+
+Service肥大化防止
+
+テスト容易化
+```
+
+---
+
+### 第2フェーズ：アーキテクチャ再設計
+
+#### 6. Repository層導入
+
+永続化処理を集約する。
+
+対象:
 
 ```text
 IMemberRepository
 ISettingsRepository
-IPdfService
+
+IndexedDbMemberRepository
+IndexedDbSettingsRepository
+```
+
+期待効果:
+
+- IndexedDB依存の隔離
+- SQLite移行容易化
+- テスト容易化
+
+---
+
+#### 7. Service層導入
+
+業務ロジックを集約する。
+
+対象:
+
+```text
+MemberService
+SettingsService
+PdfService
+```
+
+責務例:
+
+```text
+PDF生成データ構築
+
+ファイル名生成
+
+業務ルール適用
+
+DTO変換
+```
+
+---
+
+#### 8. Controller層導入
+
+UIイベント処理を分離する。
+
+対象:
+
+```text
+AdminController
+
+PdfController
+```
+
+責務:
+
+```text
+ユーザー操作受付
+
+Service呼び出し
+
+View更新
+```
+
+---
+
+#### 9. 契約クラス（Interface相当）導入
+
+JavaScriptでは抽象クラス風の実装で対応する。
+
+対象:
+
+```text
+IMemberRepository
+ISettingsRepository
 
 IMemberService
 ISettingsService
+IPdfService
 
 IAdminController
 IPdfController
@@ -199,153 +411,139 @@ IPdfController
 
 期待効果:
 
-- 実装ルールの統一
-- 保守担当者間の認識差異防止
-- 将来的な実装差し替え対応
+```text
+実装交換容易化
+
+責務明確化
+
+保守性向上
+```
 
 ---
 
-### PDF生成処理のDOM依存排除
+### 第3フェーズ：品質向上
 
-現在は hidden フィールドを介してPDFエンジンへデータを受け渡している。
+#### 10. バリデーション統一
 
-将来的には
+入力検証を一元管理する。
 
-```text
-Member
-Settings
-Application
-```
-
-から
+対象:
 
 ```text
-PdfData
+利用者情報
+
+共通設定
+
+申請情報
 ```
-
-を構築し、
-
-```javascript
-pdfService.generate(pdfData);
-```
-
-の形へ移行する。
-
-期待効果:
-
-- hidden項目削減
-- PDF処理と画面処理の疎結合化
-- テスト容易性向上
-
----
-
-### ドメインモデルの導入
-
-明確なモデルクラスを定義する。
-
-```text
-Member
-Settings
-Application
-PdfData
-```
-
-期待効果:
-
-- データ構造の一元管理
-- バグ混入防止
-- コードの自己説明性向上
-
----
-
-### 永続化層の抽象化
-
-IndexedDBへの直接依存をRepositoryへ隔離する。
-
-```text
-IndexedDbMemberRepository
-IndexedDbSettingsRepository
-```
-
-将来的には
-
-```text
-SqliteMemberRepository
-SqliteSettingsRepository
-```
-
-へ差し替え可能な構成を目指す。
-
-### SQLite対応の検討
-
-現在の IndexedDB に加え、
-Tauri環境での SQLite 利用を評価する。
-
-検討事項:
-
-- 移行手順
-- データ互換性
-- バックアップ方式
-- パフォーマンス比較
-
-期待効果:
-
-- データ管理の安定化
-- バックアップ容易化
-- 将来的な拡張対応
-
----
-
-### 例外処理とエラーハンドリングの統一
-
-Repository / Service / Controller ごとに
-エラー処理ポリシーを定義する。
 
 例:
 
 ```text
-ユーザー向けメッセージ
+必須チェック
 
-開発者向けログ
+日付妥当性
 
-システムエラー
+電話番号形式
+
+郵便番号形式
 ```
 
-を分離する。
-
 ---
 
-### ログ出力基盤の整備
+#### 11. 例外設計
 
-以下のイベントを記録対象とする。
+例外分類とハンドリング方針を整備する。
 
-- PDF生成失敗
-- データ保存失敗
-- データ読込失敗
-- アセット読込失敗
+例:
 
-期待効果:
+```text
+ValidationException
 
-- 障害解析容易化
-- 保守性向上
+BusinessException
 
----
-
-### 単体テスト
+InfrastructureException
+```
 
 対象:
 
-- Repository
-- Service
-- PDF関連ユーティリティ
+```text
+入力エラー
 
-目的:
+PDF生成失敗
 
-- ロジック単位の品質確保
+DB操作失敗
+
+アセット読込失敗
+```
 
 ---
 
-### 結合テスト
+#### 12. ログ設計
+
+障害解析と運用保守の効率化を図る。
+
+対象:
+
+```text
+利用者登録
+
+利用者更新
+
+利用者削除
+
+PDF生成
+
+設定変更
+
+DB移行
+```
+
+---
+
+#### 13. 単体テスト導入
+
+各コンポーネントを個別に検証する。
+
+対象:
+
+```text
+Entity
+
+Value Object
+
+DTO
+
+Mapper
+
+Service
+
+Repository
+
+PDF関連ユーティリティ
+```
+
+テスト例:
+
+```text
+MemberEntity生成
+
+PhoneNumber妥当性
+
+CareLevel変換
+
+PdfDataDTO生成
+
+Mapper変換
+
+ファイル名生成
+```
+
+---
+
+#### 14. 結合テスト導入
+
+レイヤー間の連携を検証する。
 
 対象:
 
@@ -359,28 +557,33 @@ Repository
 IndexedDB
 ```
 
-確認内容:
+シナリオ例:
 
-- 利用者登録 → 保存 → 読込
-- 共通設定保存 → 読込
-- PDF生成データ構築
-- Repository差し替え時の回帰確認
+```text
+利用者登録 → 保存 → 読込
 
-目的:
+共通設定保存 → 読込
 
-- レイヤー間連携の品質確保
+利用者選択 → PDF生成
+
+PDF生成データ構築
+```
 
 ---
 
-### E2Eテスト
+#### 15. E2Eテスト導入
 
-将来的に Playwright 導入を検討する。
+利用者視点で業務フロー全体を検証する。
+
+候補:
+
+```text
+Playwright
+```
 
 シナリオ例:
 
 ```text
-管理画面起動
- ↓
 利用者登録
  ↓
 共通設定保存
@@ -393,19 +596,187 @@ PDF作成画面へ移動
  ↓
 PDF生成
  ↓
-プレビュー表示確認
+プレビュー確認
  ↓
-PDFダウンロード確認
+ダウンロード確認
+```
+
+---
+
+### 第4フェーズ：永続化強化
+
+#### 16. SQLite対応
+
+永続化基盤の強化を検討する。
+
+候補:
+
+```text
+SQLite
+```
+
+期待効果:
+
+```text
+データ管理安定化
+
+バックアップ容易化
+
+Tauriとの高い親和性
+```
+
+---
+
+#### 17. Migration戦略策定
+
+スキーマ変更管理方式を整備する。
+
+例:
+
+```text
+Schema Version 1
+ ↓
+Schema Version 2
+ ↓
+Schema Version 3
+```
+
+対象:
+
+```text
+IndexedDBスキーマ更新
+
+SQLite移行
+
+項目追加対応
+```
+
+---
+
+#### 18. Flyway相当の運用導入
+
+SQLite採用後のスキーマ管理を標準化する。
+
+候補:
+
+```text
+Flyway
+
+独自Migration機構
 ```
 
 目的:
 
-- 実運用フロー全体の保証
-- 回帰不具合の早期発見
+```text
+スキーマ変更履歴管理
+
+自動アップグレード
+
+バージョン管理
+```
 
 ---
 
-### フォルダ構成の再整理
+### 第5フェーズ：運用・セキュリティ
+
+#### 19. バックアップ戦略
+
+利用者データ保全を強化する。
+
+候補:
+
+```text
+JSONエクスポート
+
+SQLiteバックアップ
+
+ZIP出力
+```
+
+---
+
+#### 20. セキュリティ強化
+
+個人情報保護対策を整備する。
+
+対象:
+
+```text
+氏名
+
+住所
+
+電話番号
+
+生年月日
+
+被保険者番号
+```
+
+検討事項:
+
+```text
+SQLite暗号化
+
+バックアップ暗号化
+
+ローカルデータ保護
+```
+
+---
+
+#### 21. ADR（Architecture Decision Record）導入
+
+重要な設計判断を文書化する。
+
+管理例:
+
+```text
+ADR-001
+なぜ IndexedDB を採用したか
+
+ADR-002
+なぜ Repository パターンを採用したか
+
+ADR-003
+なぜ SQLite へ移行するのか
+
+ADR-004
+なぜ pdf-lib を継続利用するのか
+
+ADR-005
+なぜ Tauri を採用したのか
+```
+
+期待効果:
+
+```text
+設計意図の共有
+
+将来の保守性向上
+
+技術選定理由の可視化
+
+属人化防止
+```
+
+ディレクトリ例:
+
+```text
+docs/
+└── adr/
+    ├── ADR-001-indexeddb.md
+    ├── ADR-002-repository.md
+    ├── ADR-003-sqlite.md
+    ├── ADR-004-pdf-lib.md
+    └── ADR-005-tauri.md
+```
+
+---
+
+#### 22. フォルダ構成再編
+
+責務ごとにコードを整理する。
 
 ```text
 assets/
@@ -413,19 +784,30 @@ assets/
 ├── services/
 ├── repositories/
 ├── interfaces/
-├── models/
+├── entities/
+├── value-objects/
+├── dtos/
+├── mappers/
 ├── views/
 ├── pdf/
 └── shared/
 ```
 
-責務ごとの分離を徹底する。
-
 ---
 
-### PDFエンジンの更なる疎結合化
+#### 23. PDFエンジン疎結合化
 
-pdf-lib への依存を PDF Service 層へ集約する。
+DOM依存を排除し、Service経由でPDF生成を行う。
+
+現状:
+
+```text
+DOM
+ ↓
+pdf-lib
+```
+
+目標:
 
 ```text
 Controller
@@ -437,16 +819,19 @@ PdfService
 pdf-lib
 ```
 
-構成を目指す。
-
 期待効果:
 
-- 実装の交換容易性
-- テスト容易性向上
-- ライブラリ依存の局所化
+```text
+テスト容易性向上
 
+保守性向上
+
+ライブラリ差し替え容易化
+
+責務分離の徹底
+```
 ---
 
 ## 免責事項
 
-⚠️ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
+ 本ツールは東京都中央区が公開する様式を参考に作成した非公式ツールです。正式な手続きには中央区提供の最新書式をご使用ください。本ツールの利用により生じた損害等について作成者は責任を負いません。
