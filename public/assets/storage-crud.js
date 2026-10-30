@@ -37,9 +37,19 @@ async function saveMember() {
 }
 
 function loadMember(id) {
-  if (!id) { $("deleteMemberBtn").disabled = true; return; }
+  if (!id) {
+    activeMember = null;
+    if ($("deleteMemberBtn")) $("deleteMemberBtn").disabled = true;
+    return;
+  }
   const req = tx("members", "readonly").get(Number(id));
-  req.onsuccess = () => { if (req.result) { applyFields(req.result); $("deleteMemberBtn").disabled = false; setStatus("利用者を読み込みました", true); } };
+  req.onsuccess = () => {
+    if (!req.result) return;
+    activeMember = req.result;
+    applyFields(req.result);
+    if ($("deleteMemberBtn")) $("deleteMemberBtn").disabled = false;
+    setStatus("利用者を読み込みました", true);
+  };
 }
 
 async function deleteMember() {
@@ -62,9 +72,16 @@ function saveSettings() {
   data.id = "singleton";
   const store = tx("settings", "readwrite");
   store.put(data);
-  store.transaction.oncomplete = () => setStatus("共通設定を保存しました", true);
+  store.transaction.oncomplete = () => {
+    activeSettings = data;
+    setStatus("共通設定を保存しました", true);
+  };
 }
 function loadSettings() {
   const req = tx("settings", "readonly").get("singleton");
-  req.onsuccess = () => { if (req.result) applyFields(req.result); };
+  req.onsuccess = () => {
+    if (!req.result) return;
+    activeSettings = req.result;
+    applyFields(req.result);
+  };
 }
