@@ -21,10 +21,12 @@ CareDocLib は当初 Cloudflare Pages 上で動作する静的 Web アプリと�
 
 ### 開発起動
 
+bun install
 bunx tauri dev
 
 ### 配布用ビルド
 
+bun install
 bunx tauri build
 
 ### 出力先
@@ -46,7 +48,6 @@ src-tauri/target/release/bundle/
 care-doc-lib/
 ├── public/                        # フロントエンド資産（Tauriから読み込み）
 │   ├── index.html                 # 本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
-│   ├── _headers                   # Cloudflare Pages用キャッシュ・セキュリティ設定
 │   ├── assets/                    # アプリのコード・ライブラリ
 │   │   ├── styles.css             # スタイル（ベージュ＋オレンジ配色）
 │   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
