@@ -20,8 +20,22 @@ function mapCareLevel(c) {
     "要介護4":"Long-term Care Level 4","要介護5":"Long-term Care Level 5","要支援1":"Support Level 1","要支援2":"Support Level 2" })[c] || null;
 }
 
+function pdfValue(id) {
+  const fieldId = id === "Insurance ID Number" ? "insuranceIdNumber" : id;
+  const input = $(fieldId);
+  if (input) return input.value.trim();
+  if (Object.prototype.hasOwnProperty.call(activeMember || {}, fieldId)) {
+    return String(activeMember[fieldId] ?? "").trim();
+  }
+  if (Object.prototype.hasOwnProperty.call(activeSettings || {}, fieldId)) {
+    return String(activeSettings[fieldId] ?? "").trim();
+  }
+  return "";
+}
+
 async function generate() {
   if (!layout || !templateBytes || !fontBytes) { setStatus("アセット未読込のため生成できません"); return; }
+  if (!activeMember) { setStatus("利用者を選択してください"); return; }
   setStatus("生成中…");
 
   const pdfDoc = await PDFDocument.load(templateBytes.slice(0));
@@ -29,54 +43,54 @@ async function generate() {
   const font = await pdfDoc.embedFont(fontBytes, { subset: false });
   const page = pdfDoc.getPages()[0];
 
-  drawText(page, font, "Insurance ID Number", v("insuranceIdNumber"));
-  drawText(page, font, "name", v("name"));
-  drawText(page, font, "furigana", v("furigana"));
-  drawText(page, font, "birthYear", v("birthYear"));
-  drawText(page, font, "birthMonth", v("birthMonth"));
-  drawText(page, font, "birthDay", v("birthDay"));
-  drawText(page, font, "address", v("address"));
-  drawText(page, font, "phone", v("phone"));
+  drawText(page, font, "Insurance ID Number", pdfValue("Insurance ID Number"));
+  drawText(page, font, "name", pdfValue("name"));
+  drawText(page, font, "furigana", pdfValue("furigana"));
+  drawText(page, font, "birthYear", pdfValue("birthYear"));
+  drawText(page, font, "birthMonth", pdfValue("birthMonth"));
+  drawText(page, font, "birthDay", pdfValue("birthDay"));
+  drawText(page, font, "address", pdfValue("address"));
+  drawText(page, font, "phone", pdfValue("phone"));
 
-  if (v("gender") === "男") drawCircle(page, font, "genderMale");
-  else if (v("gender") === "女") drawCircle(page, font, "genderFemale");
+  if (pdfValue("gender") === "男") drawCircle(page, font, "genderMale");
+  else if (pdfValue("gender") === "女") drawCircle(page, font, "genderFemale");
 
-  const careKey = mapCareLevel(v("careLevel"));
+  const careKey = mapCareLevel(pdfValue("careLevel"));
   if (careKey) drawCircle(page, font, careKey);
 
-  drawText(page, font, "startYear", v("startYear"));
-  drawText(page, font, "startMonth", v("startMonth"));
-  drawText(page, font, "startDay", v("startDay"));
-  drawText(page, font, "endYear", v("endYear"));
-  drawText(page, font, "endMonth", v("endMonth"));
-  drawText(page, font, "endDay", v("endDay"));
-  drawText(page, font, "institutionYear", v("institutionYear"));
-  drawText(page, font, "institutionMonth", v("institutionMonth"));
-  drawText(page, font, "institutionDay", v("institutionDay"));
+  drawText(page, font, "startYear", pdfValue("startYear"));
+  drawText(page, font, "startMonth", pdfValue("startMonth"));
+  drawText(page, font, "startDay", pdfValue("startDay"));
+  drawText(page, font, "endYear", pdfValue("endYear"));
+  drawText(page, font, "endMonth", pdfValue("endMonth"));
+  drawText(page, font, "endDay", pdfValue("endDay"));
+  drawText(page, font, "institutionYear", pdfValue("institutionYear"));
+  drawText(page, font, "institutionMonth", pdfValue("institutionMonth"));
+  drawText(page, font, "institutionDay", pdfValue("institutionDay"));
 
-  drawText(page, font, "Survey Location Address", v("surveyAddress"));
-  drawText(page, font, "Survey Location Phone", v("surveyPhone"));
-  drawText(page, font, "facilityName", v("facilityName"));
-  drawText(page, font, "facilityPhone", v("facilityPhone"));
-  drawText(page, font, "institutionName", v("institutionName"));
-  drawText(page, font, "institutionAddress", v("institutionAddress"));
-  drawText(page, font, "agentName", v("agentName"));
-  drawText(page, font, "agentPostal", v("agentPostal"));
-  drawText(page, font, "agentAddress", v("agentAddress"));
-  drawText(page, font, "agentPhone", v("agentPhone"));
-  drawText(page, font, "doctorName", v("doctorName"));
-  drawText(page, font, "clinicName", v("clinicName"));
-  drawText(page, font, "clinicPostal", v("clinicPostal"));
-  drawText(page, font, "clinicAddress", v("clinicAddress"));
-  drawText(page, font, "clinicPhone", v("clinicPhone"));
+  drawText(page, font, "Survey Location Address", pdfValue("surveyAddress"));
+  drawText(page, font, "Survey Location Phone", pdfValue("surveyPhone"));
+  drawText(page, font, "facilityName", pdfValue("facilityName"));
+  drawText(page, font, "facilityPhone", pdfValue("facilityPhone"));
+  drawText(page, font, "institutionName", pdfValue("institutionName"));
+  drawText(page, font, "institutionAddress", pdfValue("institutionAddress"));
+  drawText(page, font, "agentName", pdfValue("agentName"));
+  drawText(page, font, "agentPostal", pdfValue("agentPostal"));
+  drawText(page, font, "agentAddress", pdfValue("agentAddress"));
+  drawText(page, font, "agentPhone", pdfValue("agentPhone"));
+  drawText(page, font, "doctorName", pdfValue("doctorName"));
+  drawText(page, font, "clinicName", pdfValue("clinicName"));
+  drawText(page, font, "clinicPostal", pdfValue("clinicPostal"));
+  drawText(page, font, "clinicAddress", pdfValue("clinicAddress"));
+  drawText(page, font, "clinicPhone", pdfValue("clinicPhone"));
 
   drawCircle(page, font, "isFacility");
   drawCircle(page, font, "agentCategory");
 
-  drawText(page, font, "applyYear", v("applyYear"));
-  drawText(page, font, "applyMonth", v("applyMonth"));
-  drawText(page, font, "applyDay", v("applyDay"));
-  drawText(page, font, "Change Request Reason", v("changeReason"));
+  drawText(page, font, "applyYear", pdfValue("applyYear"));
+  drawText(page, font, "applyMonth", pdfValue("applyMonth"));
+  drawText(page, font, "applyDay", pdfValue("applyDay"));
+  drawText(page, font, "Change Request Reason", pdfValue("changeReason"));
 
   lastPdfBytes = await pdfDoc.save();
   const blob = new Blob([lastPdfBytes], { type: "application/pdf" });
