@@ -37,7 +37,22 @@ function prepareDateFields() {
 function setFormValues(form, values, fields) {
   fields.forEach((field) => {
     const input = form.elements.namedItem(field);
-    if (input) input.value = values[field] ?? "";
+    if (!input) return;
+
+    const value = values[field] ?? "";
+
+    // SELECTで選択肢に存在しない値は追加する
+    if (
+      input instanceof HTMLSelectElement &&
+      value !== "" &&
+      !Array.from(input.options).some(
+        (option) => option.value === String(value)
+      )
+    ) {
+      input.add(new Option(String(value), String(value)));
+    }
+
+    input.value = value;
   });
 }
 
@@ -46,6 +61,23 @@ function getFormValues(form, fields) {
     field,
     form.elements.namedItem(field).value.trim(),
   ]));
+}
+
+function isValidDate(year, month, day) {
+  // 未入力は既存仕様どおり許可
+  if (!year || !month || !day) return true;
+
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  );
+
+  return (
+    date.getFullYear() === Number(year) &&
+    date.getMonth() === Number(month) - 1 &&
+    date.getDate() === Number(day)
+  );
 }
 
 function showMemberForm(memberId = "") {
@@ -127,18 +159,64 @@ function refreshMembers() {
 
 function saveMember() {
   if (!memberForm.reportValidity()) return;
+
   const data = getFormValues(memberForm, MEMBER_FIELDS);
+
+  // 氏名チェック
+  if (!data.name) {
+    showAdminMessage(
+      "member-message",
+      "氏名を入力してください。",
+      true
+    );
+    return;
+  }
+
+  // 生年月日チェック
+  if (
+    !isValidDate(
+      data.birthYear,
+      data.birthMonth,
+      data.birthDay
+    )
+  ) {
+    showAdminMessage(
+      "member-message",
+      "生年月日が正しくありません。",
+      true
+    );
+    return;
+  }
+
   const id = $("member-id").value;
   const store = tx("members", "readwrite");
-  const request = id ? store.put({ ...data, id: Number(id) }) : store.add(data);
-  request.onerror = () => showAdminMessage("member-message", request.error.message, true);
+
+  const request = id
+    ? store.put({ ...data, id: Number(id) })
+    : store.add(data);
+
+  request.onerror = () =>
+    showAdminMessage(
+      "member-message",
+      request.error?.message ?? "保存できませんでした。",
+      true
+    );
+
   request.onsuccess = async () => {
     try {
       await refreshMembers();
       hideMemberForm();
-      showAdminMessage("member-message", `利用者「${data.name}」を保存しました。`);
+
+      showAdminMessage(
+        "member-message",
+        `利用者「${data.name}」を保存しました。`
+      );
     } catch (error) {
-      showAdminMessage("member-message", `利用者一覧を更新できませんでした: ${error.message}`, true);
+      showAdminMessage(
+        "member-message",
+        `利用者一覧を更新できませんでした: ${error.message}`,
+        true
+      );
     }
   };
 }
@@ -173,9 +251,30 @@ function loadAdminSettings() {
 function saveSettings() {
   const data = getFormValues(settingsForm, SETTINGS_FIELDS);
   data.id = "singleton";
-  const request = tx("settings", "readwrite").put(data);
-  request.onerror = () => showAdminMessage("settings-message", request.error.message, true);
-  request.onsuccess = () => showAdminMessage("settings-message", "共通設定を保存しました。");
+
+  const store = tx("settings", "readwrite");
+  const request = store.put(data);
+
+  request.onerror = () =>
+    showAdminMessage(
+      "settings-message",
+      request.error?.message ?? "共通設定を保存できませんでした。",
+      true
+    );
+
+  store.transaction.oncomplete = () =>
+    showAdminMessage(
+      "settings-message",
+      "共通設定を保存しました。"
+    );
+
+  store.transaction.onabort = () =>
+    showAdminMessage(
+      "settings-message",
+      store.transaction.error?.message ??
+        "共通設定の保存処理が中断されました。",
+      true
+    );
 }
 
 async function initializeAdmin() {
