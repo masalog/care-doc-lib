@@ -4,20 +4,84 @@
 // ---- 利用者 ----
 
 let settingsLoaded = false;
+let memberLoadSequence = 0;
+let memberGeneration = 0;
 
 async function loadMemberList() {
   const sel = $("memberSelect");
   const cur = sel.value;
+
   sel.innerHTML = '<option value="">（新規入力）</option>';
+
   const req = tx("members", "readonly").getAll();
+
   req.onsuccess = () => {
-    req.result.forEach(m => {
+    req.result.forEach((m) => {
       const opt = document.createElement("option");
       opt.value = m.id;
       opt.textContent = m.name || ("利用者#" + m.id);
       sel.appendChild(opt);
     });
+
     sel.value = cur;
+  };
+}
+
+function loadMember(id) {
+  memberGeneration++;
+  resetPdfState();
+
+  const currentSequence = ++memberLoadSequence;
+  const genBtn = $("genBtn");
+
+  if (genBtn) genBtn.disabled = true;
+
+  if (!id) {
+    activeMember = null;
+
+    if ($("deleteMemberBtn")) {
+      $("deleteMemberBtn").disabled = true;
+    }
+
+    if (currentSequence === memberLoadSequence && genBtn) {
+      genBtn.disabled = false;
+    }
+
+    return;
+  }
+
+  const req = tx("members", "readonly").get(Number(id));
+
+  req.onsuccess = () => {
+    if (currentSequence !== memberLoadSequence) return;
+
+    if (req.result) {
+      activeMember = req.result;
+      applyFields(req.result);
+
+      if ($("deleteMemberBtn")) {
+        $("deleteMemberBtn").disabled = false;
+      }
+
+      setStatus("利用者を読み込みました", true);
+    }
+
+    if (genBtn) {
+      genBtn.disabled = false;
+    }
+  };
+
+  req.onerror = () => {
+    if (currentSequence !== memberLoadSequence) return;
+
+    setStatus(
+      req.error?.message ?? "利用者を読み込めませんでした",
+      true
+    );
+
+    if (genBtn) {
+      genBtn.disabled = false;
+    }
   };
 }
 
@@ -47,32 +111,26 @@ function resetPdfState() {
     lastUrl = null;
   }
 
-  const preview = $("pdfPreview");
-  if (preview) preview.src = "";
-
-  const downloadBtn = $("downloadBtn");
-  if (downloadBtn) downloadBtn.disabled = true;
-}
-
-function loadMember(id) {
-  resetPdfState();
-
-  if (!id) {
-    activeMember = null;
-    if ($("deleteMemberBtn")) $("deleteMemberBtn").disabled = true;
-    return;
+  const preview = $("previewFrame");
+  if (preview) {
+    preview.src = "";
+    preview.classList.add("is-hidden");
   }
 
-  const req = tx("members", "readonly").get(Number(id));
-  req.onsuccess = () => {
-    if (!req.result) return;
+  const placeholder = $("previewPlaceholder");
+  if (placeholder) {
+    placeholder.style.display = "block";
+  }
 
-    activeMember = req.result;
-    applyFields(req.result);
+  const downloadBtn = $("dlBtn");
+  if (downloadBtn) {
+    downloadBtn.disabled = true;
+  }
 
-    if ($("deleteMemberBtn")) $("deleteMemberBtn").disabled = false;
-    setStatus("利用者を読み込みました", true);
-  };
+  const previewBar = $("previewBar");
+  if (previewBar) {
+    previewBar.style.display = "none";
+  }
 }
 
 async function deleteMember() {
