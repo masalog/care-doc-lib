@@ -33,9 +33,48 @@ function pdfValue(id) {
   return "";
 }
 
+function isValidApplyDate(year, month, day) {
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+
+  if (!Number.isInteger(m) || m < 1 || m > 12) {
+    return false;
+  }
+
+  const maxDay = new Date(y, m, 0).getDate();
+
+  return Number.isInteger(d) && d >= 1 && d <= maxDay;
+}
+
 async function generate() {
-  if (!layout || !templateBytes || !fontBytes) { setStatus("アセット未読込のため生成できません"); return; }
-  if (!activeMember) { setStatus("利用者を選択してください"); return; }
+  if (!layout || !templateBytes || !fontBytes) {
+    setStatus("アセット未読込のため生成できません");
+    return;
+  }
+
+  if (!settingsLoaded) {
+    setStatus("共通設定を読み込み中です。");
+    return;
+  }
+
+  if (!activeMember) {
+    setStatus("利用者を選択してください");
+    return;
+  }
+
+  // 申請日チェック
+  if (
+    !isValidApplyDate(
+      $("applyYear").value,
+      $("applyMonth").value,
+      $("applyDay").value
+    )
+  ) {
+    setStatus("申請日が正しくありません");
+    return;
+  }
+
   setStatus("生成中…");
 
   const pdfDoc = await PDFDocument.load(templateBytes.slice(0));
