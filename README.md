@@ -4,13 +4,50 @@ CareDocWeb（Java / Spring Boot + Apache PDFBox + AWS Lambda）の PDF 生成部
 
 ---
 
+## 最新状況
+
+CareDocLib は当初 Cloudflare Pages 上で動作する静的 Web アプリとして構築しましたが、現在は Bun + Rust + Tauri に対応し、Windows デスクトップアプリとして運用しています。
+
+対応形態:
+
+- ローカル実行版
+- Tauri デスクトップ版（Windows）
+
+現在も PDF生成は pdf-lib、データ保存は IndexedDB を利用しています。今後 SQLite への移行を検討しています。
+
+---
+
+## Tauri デスクトップ版
+
+### 開発起動
+
+bun install
+bunx tauri dev
+
+### 配布用ビルド
+
+bun install
+bunx tauri build
+
+### 出力先
+
+src-tauri/target/release/bundle/
+
+### 特徴
+
+- サーバー不要
+- オフライン利用可能
+- 既存のHTML/CSS/JavaScript資産を流用
+- PDF生成機能をそのまま利用可能
+
+---
+
 ## 構成
 
 ```
 care-doc-lib/
-├── public/                        # ★デプロイ対象（これだけを配信する）
+├── public/                        # フロントエンド資産（Tauriから読み込み）
 │   ├── index.html                 # 本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
-│   ├── _headers                   # Cloudflare Pages用キャッシュ・セキュリティ設定
 │   ├── assets/                    # アプリのコード・ライブラリ
 │   │   ├── styles.css             # スタイル（ベージュ＋オレンジ配色）
 │   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
@@ -29,16 +66,18 @@ care-doc-lib/
 │       ├── NotoSansJP-Regular.ttf # 埋め込み用日本語フォント（約5.4MB）
 │       └── positions.json         # 座標データ（47フィールド・元YAMLと同一値）
 │
-├── .gitignore
-└── README.md
+├── src-tauri/              # Tauriデスクトップアプリ
+│   ├── Cargo.toml
+│   ├── tauri.conf.json
+│   ├── icons/
+│   └── src/
+│
+├── package.json            # Bun管理
+├── bun.lock
+├── README.md
+└── .gitignore
 
 ```
-
----
-
-## ローカルでの起動・確認
-
-ブラウザ で `http://localhost:5500` を開く（`Ctrl + F5` で強制再読み込み推奨）
 
 ---
 
@@ -98,35 +137,6 @@ care-doc-lib/
 
 ---
 
-## デプロイ前チェックリスト
-
-- [x] 公開用に `public/` へ整理（assets / data のサブフォルダ構成）
-- [x] `_headers` でキャッシュ・セキュリティヘッダ設定
-- [x] 免責事項を画面上に表示（公的文書のため）
-- [x] データ保存（IndexedDB・利用者7名/共通設定を初期投入）
-- [x] Cloudflare公開URL（`https://<project>.pages.dev/`）でアプリが正常に動作するか確認（アセット読込・PDF生成・保存/復元）
-
----
-
-## Cloudflare Pages へのデプロイ
-
-### Wrangler CLI
-
-```bash
-# Wrangler インストール
-npm install -g wrangler
-
-# Pages プロジェクト作成（初回のみ）
-npx wrangler pages project create care-doc-lib
-
-# デプロイ（毎回）
-npx wrangler pages deploy public --project-name=care-doc-lib --branch=main
-
-# デプロイ状況確認
-npx wrangler pages deployment list --project-name=care-doc-lib
-
-```
-
 ## PDFBox → pdf-lib 対応表
 
 | 現状（PDFBox / Java） | 本アプリ（pdf-lib / JS） |
@@ -158,28 +168,13 @@ npx wrangler pages deployment list --project-name=care-doc-lib
 ## 技術スタック
 
 | 分類 | 技術 |
-| --- | --- |
-| フロントエンド | HTML / CSS / JavaScript（JSは機能ごとに9ファイルに分割） |
-| PDF生成 | pdf-lib 1.17.1 + @pdf-lib/fontkit 1.1.1 |
-| フォント | Noto Sans JP（埋め込み・`subset:false`） |
-| データ保存 | IndexedDB（利用者 `members` / 共通設定 `settings`） |
-| ホスティング | 静的（Cloudflare Pages） |
-
----
-
-## セキュリティヘッダ
-
-`public/_headers` の `/*` ブロックで、全レスポンスに以下のセキュリティヘッダを付与しています。外部リソースを一切読まない（CDNなし・全自己ホスト）構成のため、CSPを非常に厳しく設定できます。
-
-| ヘッダ | 値 | 役割 |
-| --- | --- | --- |
-| `X-Content-Type-Options` | `nosniff` | MIMEスニッフィングを禁止（拡張子に反した実行を防止） |
-| `X-Frame-Options` | `DENY` | このページを一切iframeに埋め込ませない（クリックジャック対策を最大化）。PDFプレビューの `blob:` はローカル生成のためHTTPヘッダを持たず、子フレーム読込はCSP `frame-src blob:` で制御されるので影響なし |
-| `Referrer-Policy` | `no-referrer` | 遷移先にリファラーを送らない（プライバシー保護） |
-| `Permissions-Policy` | `geolocation=(), camera=(), microphone=()` | 位置情報・カメラ・マイクを全面無効化 |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPSを強制（1年間・サブドメイン含む） |
-| `Cross-Origin-Opener-Policy` | `same-origin` | 他オリジンの文書との browsing context group と opener の共有を制限 |
-| `Content-Security-Policy` | 自己オリジン（`'self'`）中心・`frame-ancestors 'none'` | XSS・不正リソース読込のリスクを軽減。`frame-ancestors 'none'` で被埋め込みを全面禁止（`X-Frame-Options: DENY` と一致）。PDFプレビュー用に `frame-src`/`img-src` は `blob:` を許可 |
+|--------|--------|
+| フロントエンド | HTML / CSS / JavaScript |
+| PDF生成 | pdf-lib |
+| データ保存 | IndexedDB |
+| パッケージ管理 | Bun |
+| デスクトップ化 | Tauri 2.x |
+| ネイティブ基盤 | Rust |
 
 ---
 
