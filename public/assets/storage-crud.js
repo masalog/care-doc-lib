@@ -2,6 +2,9 @@
 // 依存: pdf-core.js（$, setStatus）, storage-core.js（tx, collectFields, applyFields, MEMBER_FIELDS, SETTINGS_FIELDS）
 // 読み込み順: pdf-core.js → storage-core.js → このファイル
 // ---- 利用者 ----
+
+let settingsLoaded = false;
+
 async function loadMemberList() {
   const sel = $("memberSelect");
   const cur = sel.value;
@@ -36,17 +39,37 @@ async function saveMember() {
   };
 }
 
+function resetPdfState() {
+  lastPdfBytes = null;
+
+  if (lastUrl) {
+    URL.revokeObjectURL(lastUrl);
+    lastUrl = null;
+  }
+
+  const preview = $("pdfPreview");
+  if (preview) preview.src = "";
+
+  const downloadBtn = $("downloadBtn");
+  if (downloadBtn) downloadBtn.disabled = true;
+}
+
 function loadMember(id) {
+  resetPdfState();
+
   if (!id) {
     activeMember = null;
     if ($("deleteMemberBtn")) $("deleteMemberBtn").disabled = true;
     return;
   }
+
   const req = tx("members", "readonly").get(Number(id));
   req.onsuccess = () => {
     if (!req.result) return;
+
     activeMember = req.result;
     applyFields(req.result);
+
     if ($("deleteMemberBtn")) $("deleteMemberBtn").disabled = false;
     setStatus("利用者を読み込みました", true);
   };
@@ -77,11 +100,20 @@ function saveSettings() {
     setStatus("共通設定を保存しました", true);
   };
 }
+
 function loadSettings() {
   const req = tx("settings", "readonly").get("singleton");
+
   req.onsuccess = () => {
-    if (!req.result) return;
-    activeSettings = req.result;
-    applyFields(req.result);
+    if (req.result) {
+      activeSettings = req.result;
+      applyFields(req.result);
+    }
+
+    settingsLoaded = true;
+  };
+
+  req.onerror = () => {
+    settingsLoaded = true;
   };
 }
