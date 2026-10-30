@@ -1,8 +1,7 @@
-# OS / エディタ
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-
-# CloudFlare
-.wrangler/
+node_modules/
+src-tauri/target/
+src-tauri/gen/
