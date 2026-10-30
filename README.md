@@ -47,18 +47,18 @@ src-tauri/target/release/bundle/
 ```
 care-doc-lib/
 ├── public/                        # フロントエンド資産（Tauriから読み込み）
-│   ├── index.html                 # 本体マークアップ（フォーム入力 → PDF生成・プレビュー・保存）
+│   ├── index.html                 # PDF作成画面（利用者選択 → PDF生成・プレビュー）
+│   ├── admin.html                 # 利用者・共通設定の管理画面
 │   ├── assets/                    # アプリのコード・ライブラリ
-│   │   ├── styles.css             # スタイル（ベージュ＋オレンジ配色）
+│   │   ├── style.css              # 画面共通スタイル
+│   │   ├── admin.js               # 管理画面の利用者CRUD・共通設定
 │   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
 │   │   ├── pdf-draw.js            # 描画(drawText/drawCircle/mapCareLevel)・PDF生成(generate)
 │   │   ├── pdf-export.js          # PDFファイル名生成・ダウンロード・PDF系ボタン登録
 │   │   ├── storage-core.js        # フィールド定義・IndexedDB基盤(openDB/tx/collectFields/applyFields)
 │   │   ├── storage-crud.js        # 利用者CRUD（保存/読込/削除）・共通設定の保存/復元
-│   │   ├── storage-export.js      # まとめて保存（全データをJSONファイルへ書き出し）
-│   │   ├── storage-import.js      # まとめて追加（JSONファイルから利用者を追加・検証）・ボタン登録(initIO)
-│   │   ├── storage-seed.js        # 初期データ(SEED)・起動(initStorage)・イベント登録
-│   │   ├── main.js                # 起動呼び出し（bootstrap() / initStorage()）
+│   │   ├── storage-seed.js        # 初期データ(SEED)・PDF画面のDB初期化
+│   │   ├── main.js                # PDF画面の起動
 │   │   ├── pdf-lib.min.js         # PDF描画ライブラリ
 │   │   └── fontkit.umd.min.js     # 日本語フォント埋め込み用
 │   └── data/                      # テンプレ・フォント・座標
@@ -84,15 +84,15 @@ care-doc-lib/
 ## 起動後の確認
 
 - 上部に `座標:OK(47) / テンプレ:OK / フォント:OK`、下部に「準備完了」→ 読込成功
-- 生成前は右側にプレースホルダー（書類アイコン＋案内文）を表示
-- 「PDFを生成してプレビュー」→ 右にPDF表示（出ない場合は「新しいタブでPDFを開く」）
-- エラー時は画面上部に赤帯で内容表示
+- 生成前はフォーム下部に案内文を表示
+- 「PDF生成・プレビュー」→ フォーム下部にPDFを表示（表示されない場合は「新しいタブで開く」）
+- エラー時は画面内の通知欄に内容を表示
 
 ---
 
 ## 主な機能
 
-- 座標指定でのPDF生成: テンプレPDFの47フィールドに、フォーム入力値を座標指定で描画
+- 座標指定でのPDF生成: 47項目の座標データを使い、対応する項目に入力値や選択結果を描画
 - 年は西暦で入力・印字（テンプレの年欄は元号印字のない自由記入欄）
 - 性別・要介護度は「〇」で該当欄を囲む
 - データ保存（IndexedDB）: 利用者（複数）＋共通設定（1件）を端末内に保存（後述）
@@ -100,40 +100,15 @@ care-doc-lib/
 
 ---
 
-## 配色（ベージュ＋オレンジ）
-
-`assets/styles.css` の CSS 変数で管理:
-
-| 用途 | 色 |
-| --- | --- |
-| 背景 | ベージュ `#f5efe6` |
-| カード | 明るいベージュ `#fbf7f0` |
-| アクセント（ボタン・見出し・フォーカス枠） | オレンジ `#e8843d` |
-| 淡いアクセント（免責バー・ホバー） | 淡オレンジ `#fce4cf` |
-| 文字 | ダークブラウン `#3f3a34` |
-
----
-
 ## データ保存（IndexedDB・端末内のみ）
 
-入力データはブラウザの IndexedDB に保存され、外部サーバーへは一切送信されません（ゼロデータ維持）。 元の CareDocWeb の構造に合わせ、2種類に分けて保存します:
+PDF作成画面（`index.html`）と管理画面（`admin.html`）の2画面構成です。利用者データと共通設定は同じブラウザの IndexedDB を共有し、外部サーバーへ送信しません。
 
-- 利用者データ（複数保存）: 氏名・被保険者番号・生年月日・住所・要介護度・有効期間・入所日など、人ごとに変わる項目。
-  - 「保存済み利用者」のプルダウンで選択 → フォームに自動入力
-  - 「この利用者を保存/更新」で登録・上書き、「削除」で削除
-- 共通設定（1件のみ）: 調査場所・施設・代行者・主治医など事業所で共通の項目。
-  - 「共通設定を保存」で保存、次回起動時に自動復元
+- 管理画面では利用者の登録・編集・削除と共通設定の保存ができます。
+- PDF作成画面では登録済み利用者を選び、申請日・変更理由を指定してPDFを生成します。
+- 共通設定は1件を保存し、PDF作成画面で自動的に使用します。
 
 保存先は DB 名 `caredoc`、ストア `members`（利用者）/ `settings`（共通設定）。 初回起動時、利用者データが空なら CareDocWeb のエクスポートデータ（利用者7名＋共通設定1件）を自動投入します（`storage-seed.js` の `seedIfEmpty()`）。 ブラウザのデータを消去すると保存内容も消えます。端末間の同期はありません。
-
----
-
-## JSONファイルでの一括保存・追加
-
-「保存済み利用者」パネルの2つのボタンで、全データをJSONファイルに書き出し・取り込みできます（すべて端末内で完結・外部送信なし）。
-
-- まとめて保存（`storage-export.js`）: 全利用者＋共通設定を1つのJSONに書き出してダウンロード。ファイル名は `caredoc_backup_YYYY年M月D日.json`。
-- まとめて追加（`storage-import.js`）: 保存したJSONを検証して取り込み。利用者はIDを振り直して既存に追加（既存は上書きされず常に増える）、共通設定は取り込んだ内容で上書き。実行前に件数を確認するダイアログを表示。
 
 ---
 
@@ -175,6 +150,300 @@ care-doc-lib/
 | パッケージ管理 | Bun |
 | デスクトップ化 | Tauri 2.x |
 | ネイティブ基盤 | Rust |
+
+---
+
+## 今後の課題
+
+### Controller / Service / Repository 構成への再設計
+
+画面操作、業務ロジック、データアクセスを分離し、責務を明確化する。
+
+```text
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+IndexedDB
+```
+
+期待効果:
+
+- 保守性向上
+- 可読性向上
+- テスト容易性向上
+- SQLite移行の容易化
+
+---
+
+### 契約クラス（Interface相当）の導入
+
+JavaScriptでは抽象クラス風の契約クラスを利用し、
+各レイヤーの責務と公開APIを明確化する。
+
+例:
+
+```text
+IMemberRepository
+ISettingsRepository
+IPdfService
+
+IMemberService
+ISettingsService
+
+IAdminController
+IPdfController
+```
+
+期待効果:
+
+- 実装ルールの統一
+- 保守担当者間の認識差異防止
+- 将来的な実装差し替え対応
+
+---
+
+### PDF生成処理のDOM依存排除
+
+現在は hidden フィールドを介してPDFエンジンへデータを受け渡している。
+
+将来的には
+
+```text
+Member
+Settings
+Application
+```
+
+から
+
+```text
+PdfData
+```
+
+を構築し、
+
+```javascript
+pdfService.generate(pdfData);
+```
+
+の形へ移行する。
+
+期待効果:
+
+- hidden項目削減
+- PDF処理と画面処理の疎結合化
+- テスト容易性向上
+
+---
+
+### ドメインモデルの導入
+
+明確なモデルクラスを定義する。
+
+```text
+Member
+Settings
+Application
+PdfData
+```
+
+期待効果:
+
+- データ構造の一元管理
+- バグ混入防止
+- コードの自己説明性向上
+
+---
+
+### 永続化層の抽象化
+
+IndexedDBへの直接依存をRepositoryへ隔離する。
+
+```text
+IndexedDbMemberRepository
+IndexedDbSettingsRepository
+```
+
+将来的には
+
+```text
+SqliteMemberRepository
+SqliteSettingsRepository
+```
+
+へ差し替え可能な構成を目指す。
+
+### SQLite対応の検討
+
+現在の IndexedDB に加え、
+Tauri環境での SQLite 利用を評価する。
+
+検討事項:
+
+- 移行手順
+- データ互換性
+- バックアップ方式
+- パフォーマンス比較
+
+期待効果:
+
+- データ管理の安定化
+- バックアップ容易化
+- 将来的な拡張対応
+
+---
+
+### 例外処理とエラーハンドリングの統一
+
+Repository / Service / Controller ごとに
+エラー処理ポリシーを定義する。
+
+例:
+
+```text
+ユーザー向けメッセージ
+
+開発者向けログ
+
+システムエラー
+```
+
+を分離する。
+
+---
+
+### ログ出力基盤の整備
+
+以下のイベントを記録対象とする。
+
+- PDF生成失敗
+- データ保存失敗
+- データ読込失敗
+- アセット読込失敗
+
+期待効果:
+
+- 障害解析容易化
+- 保守性向上
+
+---
+
+### 単体テスト
+
+対象:
+
+- Repository
+- Service
+- PDF関連ユーティリティ
+
+目的:
+
+- ロジック単位の品質確保
+
+---
+
+### 結合テスト
+
+対象:
+
+```text
+Controller
+ ↓
+Service
+ ↓
+Repository
+ ↓
+IndexedDB
+```
+
+確認内容:
+
+- 利用者登録 → 保存 → 読込
+- 共通設定保存 → 読込
+- PDF生成データ構築
+- Repository差し替え時の回帰確認
+
+目的:
+
+- レイヤー間連携の品質確保
+
+---
+
+### E2Eテスト
+
+将来的に Playwright 導入を検討する。
+
+シナリオ例:
+
+```text
+管理画面起動
+ ↓
+利用者登録
+ ↓
+共通設定保存
+ ↓
+PDF作成画面へ移動
+ ↓
+利用者選択
+ ↓
+申請日入力
+ ↓
+PDF生成
+ ↓
+プレビュー表示確認
+ ↓
+PDFダウンロード確認
+```
+
+目的:
+
+- 実運用フロー全体の保証
+- 回帰不具合の早期発見
+
+---
+
+### フォルダ構成の再整理
+
+```text
+assets/
+├── controllers/
+├── services/
+├── repositories/
+├── interfaces/
+├── models/
+├── views/
+├── pdf/
+└── shared/
+```
+
+責務ごとの分離を徹底する。
+
+---
+
+### PDFエンジンの更なる疎結合化
+
+pdf-lib への依存を PDF Service 層へ集約する。
+
+```text
+Controller
+ ↓
+Service
+ ↓
+PdfService
+ ↓
+pdf-lib
+```
+
+構成を目指す。
+
+期待効果:
+
+- 実装の交換容易性
+- テスト容易性向上
+- ライブラリ依存の局所化
 
 ---
 
