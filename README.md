@@ -94,31 +94,6 @@ Entity
 
 ---
 
-## Tauri デスクトップ版
-
-### 開発起動
-
-bun install<br>
-bunx tauri dev
-
-### 配布用ビルド
-
-bun install<br>
-bunx tauri build
-
-### 出力先
-
-src-tauri/target/release/bundle/
-
-### 特徴
-
-- サーバー不要
-- オフライン利用可能
-- 既存のHTML/CSS/JavaScript資産を流用
-- PDF生成機能をそのまま利用可能
-
----
-
 ## 構成
 
 ```
@@ -155,6 +130,30 @@ care-doc-lib/
 └── .gitignore
 
 ```
+---
+
+## Tauri デスクトップ版
+
+### 開発起動
+
+bun install<br>
+bunx tauri dev
+
+### 配布用ビルド
+
+bun install<br>
+bunx tauri build
+
+### 出力先
+
+src-tauri/target/release/bundle/
+
+### 特徴
+
+- サーバー不要
+- オフライン利用可能
+- 既存のHTML/CSS/JavaScript資産を流用
+- PDF生成機能をそのまま利用可能
 
 ---
 
