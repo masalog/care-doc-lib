@@ -13,7 +13,7 @@ CareDocLib は当初 Cloudflare Pages 上で動作する静的 Web アプリと�
 - ローカル実行版
 - Tauri デスクトップ版（Windows）
 
-現在も PDF生成は pdf-lib、データ保存は IndexedDB を利用しています。今後 SQLite への移行を検討しています。
+現在のデータ保存は IndexedDB です。追加開発後の保存先には SQLite を採用する方針を決定しています。既存データの移行は未実施です。
 
 ---
 
@@ -44,13 +44,13 @@ Entity
 ---
 第0フェーズ：要件定義・設計
 
-01. 要件定義書作成
-02. 非機能要件定義
-03. ユースケース整理
-04. ADR（Architecture Decision Record）運用開始
-05. 基本設計書作成
-06. UI/UX設計
-07. 詳細設計書作成
+01. [ユースケース整理](docs/use-cases.md)
+02. [機能要件定義書](docs/functional-requirements.md)
+03. [品質要件定義書](docs/quality-requirements.md)
+04. [ADR-001：Tauri採用](docs/adr/ADR-001-platform-tauri.md)
+05. [ADR-002：SQLite採用](docs/adr/ADR-002-sqlite-storage.md)
+06. [基本設計書](docs/basic-design.md)
+07. [画面設計書](docs/screen-design.md)
 
 第1フェーズ：ドメイン・データ設計
 
@@ -184,7 +184,7 @@ PDF作成画面（`index.html`）と管理画面（`admin.html`）の2画面構�
 - PDF作成画面では登録済み利用者を選び、申請日・変更理由を指定してPDFを生成します。
 - 共通設定は1件を保存し、PDF作成画面で自動的に使用します。
 
-保存先は DB 名 `caredoc`、ストア `members`（利用者）/ `settings`（共通設定）。 初回起動時、利用者データが空なら CareDocWeb のエクスポートデータ（利用者7名＋共通設定1件）を自動投入します（`storage-seed.js` の `seedIfEmpty()`）。 ブラウザのデータを消去すると保存内容も消えます。端末間の同期はありません。
+保存先は DB 名 `caredoc`、ストア `members`（利用者）/ `settings`（共通設定）。 初回起動時、利用者データが空なら CareDocWeb のエクスポートデータ（利用者7名＋共通設定1件）を自動投入します（`storage-seed.js` の `seedIfEmpty()`）。ブラウザー版ではブラウザーのサイトデータを消去すると保存内容も消えます。Tauri版のIndexedDBはアプリのWebView領域に保存され、通常のブラウザーのデータ消去とは別ですが、アプリデータの削除・初期化等で失われる可能性があります。端末間の同期はありません。
 
 ---
 
