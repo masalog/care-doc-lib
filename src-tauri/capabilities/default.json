@@ -1,11 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "enables the default permissions",
+  "description": "Frontend does not require Tauri API permissions",
   "windows": [
     "main"
   ],
-  "permissions": [
-    "core:default"
-  ]
+  "permissions": []
 }

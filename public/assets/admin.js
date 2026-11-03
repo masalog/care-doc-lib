@@ -16,6 +16,16 @@ function showSection(name, button) {
   if (button) button.classList.add("active");
 }
 
+function bindAdminActions() {
+  document.querySelectorAll("[data-section]").forEach((button) => {
+    button.addEventListener("click", () => showSection(button.dataset.section, button));
+  });
+  $("new-member-btn").addEventListener("click", () => showMemberForm());
+  $("save-member-btn").addEventListener("click", saveMember);
+  $("cancel-member-btn").addEventListener("click", hideMemberForm);
+  $("save-settings-btn").addEventListener("click", saveSettings);
+}
+
 function fillDateSelect(id, first, last) {
   const select = $(id);
   select.replaceChildren(new Option("--", ""));
@@ -278,6 +288,7 @@ function saveSettings() {
 }
 
 async function initializeAdmin() {
+  bindAdminActions();
   try {
     db = await openDB();
     await seedIfEmpty();
