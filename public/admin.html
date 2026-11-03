@@ -17,15 +17,15 @@
     </header>
 
     <nav>
-        <button class="nav-btn active" onclick="showSection('members', this)">利用者管理</button>
-        <button class="nav-btn" onclick="showSection('settings', this)">共通設定</button>
+        <button class="nav-btn active" data-section="members">利用者管理</button>
+        <button class="nav-btn" data-section="settings">共通設定</button>
     </nav>
 
     <main>
         <!-- 利用者管理セクション -->
         <section id="section-members" class="section">
             <h2>利用者一覧</h2>
-            <button class="btn btn-success" onclick="showMemberForm()">＋ 新規登録</button>
+            <button id="new-member-btn" class="btn btn-success">＋ 新規登録</button>
             <div id="member-list"></div>
 
             <!-- 利用者登録・編集フォーム -->
@@ -137,8 +137,8 @@
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button type="button" class="btn btn-primary" onclick="saveMember()">保存</button>
-                        <button type="button" class="btn btn-secondary" onclick="hideMemberForm()">キャンセル</button>
+                        <button id="save-member-btn" type="button" class="btn btn-primary">保存</button>
+                        <button id="cancel-member-btn" type="button" class="btn btn-secondary">キャンセル</button>
                     </div>
                 </form>
             </div>
@@ -229,7 +229,7 @@
                         <input type="text" id="s-clinic-phone" name="clinicPhone">
                     </div>
                 </div>
-                <button type="button" class="btn btn-primary" onclick="saveSettings()">設定を保存</button>
+                <button id="save-settings-btn" type="button" class="btn btn-primary">設定を保存</button>
             </form>
             <div id="settings-message" class="message"></div>
         </section>
