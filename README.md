@@ -22,27 +22,30 @@ CareDocLib は当初 Cloudflare Pages 上で動作する静的 Web アプリと�
 ### 目指すアーキテクチャ
 
 ```text
-View
+[フロントエンド：JS（WebView）]
+View（HTML）
  ↓
-Controller
+画面ロジック（admin.js / main.js）
  ↓
-Service
+PDF生成（pdf-lib）※フロントエンドに残す
+ ↓ invoke（アプリ独自のコマンドのみ許可）
+[バックエンド：Rust]
+Command（Controller相当）
+ ↓
+Service（業務ルール・入力チェック）
  ↓
 Repository
  ↓
-DB
-
-Entity
- └─ Value Object
-
-Entity
- ⇄ Mapper ⇄ DTO
+SQLite
 ```
 
-責務分離を徹底し、長期保守・機能追加・永続化方式変更に強い構成を目指す。
+- 画面からはSQLを直接実行させない（tauri-plugin-sql 等は使わない）
+- JSとRustの受け渡しの型をDTO相当として先に定義する
+- 実装は機能ごとにフロントエンドからバックエンドまで一続きで作り、都度統合する
 
 ---
-第0フェーズ：要件定義・設計
+
+第0フェーズ：要件定義・設計（済）
 
 01. [ユースケース整理](docs/use-cases.md)
 02. [機能要件定義書](docs/functional-requirements.md)
@@ -52,45 +55,32 @@ Entity
 06. [基本設計書](docs/basic-design.md)
 07. [画面設計書](docs/screen-design.md)
 
-第1フェーズ：ドメイン・データ設計
+第1フェーズ：安全網（最優先）
 
-08. ドメインモデル図作成
-09. DB構造整理
-10. ER図作成
-11. Entity定義
-12. Value Object定義
-13. DTO定義
-14. Mapper定義
+08. バックアップ（JSON書き出し・読み込み。現行IndexedDBのまま）
+09. PDF出力の基準テスト（47項目の座標・印字内容の回帰確認）
 
-第2フェーズ：アーキテクチャ設計
+※ CSP・capabilities の絞り込みは対応済み（`tauri.conf.json` / `capabilities/default.json`）
 
-15. Repository契約設計
-16. Repository層導入
-17. Service責務定義
-18. Service層導入
-19. PDFエンジン疎結合化
-20. Controller層導入
-21. 契約クラス（Interface相当）導入
-22. フォルダ構成設計
+第2フェーズ：方針決定・データ設計
 
-第3フェーズ：品質向上
+10. ADR-003：SQLiteはRustのコマンド経由で利用／DBファイルの暗号化方式の決定
+11. ドメインモデル・DB構造（ER図を兼ねる。利用者・共通設定・テンプレート版）
+12. コマンド一覧と受け渡しの型の定義（DTO相当）
 
-23. バリデーション統一
-24. 例外設計
-25. ログ設計
-26. 単体テスト導入
-27. 結合テスト導入
-28. E2Eテスト導入
+第3フェーズ：機能ごとの実装・統合（Rust＋JSを一続きで）
 
-第4フェーズ：永続化強化
+13. 共通設定の読込・保存
+14. 利用者の一覧・読込
+15. 利用者の保存・削除（入力チェック・エラー形式の統一、Rust単体テスト）
+16. IndexedDBからの移行（08のJSONをRust側で取り込み）
+17. IndexedDB関連コードの削除・capabilitiesを独自コマンドのみに限定
 
-29. SQLite対応
-30. Migration戦略策定
+第4フェーズ：PDF・運用
 
-第5フェーズ：運用・セキュリティ
-
-31. バックアップ戦略
-32. セキュリティ強化
+18. PDF生成の分離と座標・テンプレートの版管理（09で出力不変を確認）
+19. ログ方針（個人情報を出力しない）・エラー時の通知
+20. 配布・コード署名・更新方法（インストーラー、アップデート手順）
 
 ---
 
