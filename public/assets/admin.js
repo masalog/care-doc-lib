@@ -12,6 +12,7 @@ function showAdminMessage(id, message, isError = false) {
 function showSection(name, button) {
   $("section-members").classList.toggle("hidden", name !== "members");
   $("section-settings").classList.toggle("hidden", name !== "settings");
+  $("section-backup").classList.toggle("hidden", name !== "backup");
   document.querySelectorAll(".nav-btn").forEach((item) => item.classList.remove("active"));
   if (button) button.classList.add("active");
 }
@@ -24,6 +25,42 @@ function bindAdminActions() {
   $("save-member-btn").addEventListener("click", saveMember);
   $("cancel-member-btn").addEventListener("click", hideMemberForm);
   $("save-settings-btn").addEventListener("click", saveSettings);
+  $("export-backup-btn").addEventListener("click", async () => {
+    showAdminMessage("backup-message", "");
+    try {
+      const backup = await exportBackup();
+      showAdminMessage(
+        "backup-message",
+        `利用者 ${backup.members.length} 件・共通設定 ${backup.settings ? "あり" : "なし"} を書き出しました。`
+      );
+    } catch (error) {
+      showAdminMessage(
+        "backup-message",
+        `バックアップを書き出せませんでした: ${error.message}`,
+        true
+      );
+    }
+  });
+  $("import-backup-file").addEventListener("change", async (event) => {
+    const input = event.currentTarget;
+    const file = input.files[0];
+    if (!file) return;
+
+    showAdminMessage("backup-message", "");
+    try {
+      const result = await importBackup(file);
+      if (result) {
+        showAdminMessage(
+          "backup-message",
+          `バックアップを復元しました（利用者 ${result.membersCount} 件・共通設定 ${result.hasSettings ? "あり" : "なし"}）。`
+        );
+      }
+    } catch (error) {
+      showAdminMessage("backup-message", `バックアップを復元できませんでした: ${error.message}`, true);
+    } finally {
+      input.value = "";
+    }
+  });
 }
 
 function fillDateSelect(id, first, last) {
@@ -251,7 +288,7 @@ function loadAdminSettings() {
   return new Promise((resolve, reject) => {
     const request = tx("settings", "readonly").get("singleton");
     request.onsuccess = () => {
-      if (request.result) setFormValues(settingsForm, request.result, SETTINGS_FIELDS);
+      setFormValues(settingsForm, request.result ?? {}, SETTINGS_FIELDS);
       resolve();
     };
     request.onerror = () => reject(request.error);
