@@ -19,6 +19,7 @@
     <nav>
         <button class="nav-btn active" data-section="members">利用者管理</button>
         <button class="nav-btn" data-section="settings">共通設定</button>
+        <button class="nav-btn" data-section="backup">バックアップ</button>
     </nav>
 
     <main>
@@ -233,6 +234,17 @@
             </form>
             <div id="settings-message" class="message"></div>
         </section>
+
+        <section id="section-backup" class="section hidden">
+            <h2>バックアップ</h2>
+            <p class="notice">バックアップファイルには利用者の個人情報が含まれます。保存場所に注意し、不要になったファイルは削除してください。</p>
+            <button id="export-backup-btn" type="button" class="btn btn-primary">バックアップを書き出す</button>
+            <div class="form-group">
+                <label for="import-backup-file">バックアップから復元</label>
+                <input type="file" id="import-backup-file" accept=".json,application/json">
+            </div>
+            <div id="backup-message" class="message" role="status"></div>
+        </section>
     </main>
 
     <footer>
@@ -247,6 +259,7 @@
     <script src="assets/pdf-core.js"></script>
     <script src="assets/storage-core.js"></script>
     <script src="assets/storage-seed.js"></script>
+    <script src="assets/storage-backup.js"></script>
     <script src="assets/admin.js"></script>
 </body>
 </html>
