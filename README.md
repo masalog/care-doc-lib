@@ -69,7 +69,7 @@ SQLite
 第3フェーズ：方針決定・DB設計
 
 09. [ADR-003：SQLiteはRustのコマンド経由で利用／暗号化方式の決定](docs/adr/ADR-003-sqlite-access-encryption.md)（済）
-10. DB設計書（テーブル定義・ER図・IndexedDBとの項目対応表・マイグレーション手順）
+10. [DB設計書（テーブル定義・ER図・IndexedDBとの項目対応表・マイグレーション手順）](docs/db-design.md)（済）
 11. コマンド一覧と受け渡しの型の定義（DTO相当）
 
 第4フェーズ：機能ごとにSQLiteへ移行（Rust＋JSを一続きで）
