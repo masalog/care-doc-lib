@@ -49,7 +49,7 @@ SQLite
 
 ---
 
-第0フェーズ：要件定義・設計（済）
+第1フェーズ：要件定義・設計（済）
 
 01. [ユースケース整理](docs/use-cases.md)
 02. [機能要件定義書](docs/functional-requirements.md)
@@ -59,19 +59,19 @@ SQLite
 06. [基本設計書](docs/basic-design.md)
 07. [画面設計書](docs/screen-design.md)
 
-第1フェーズ：安全網（最優先）
+第2フェーズ：安全網（最優先）
 
 08. バックアップ（JSON書き出し・読み込み。現行IndexedDBのまま）（済）— [実装手順書](docs/impl/08-backup.md)
 
 ※ CSP・capabilities の絞り込みは対応済み（`tauri.conf.json` / `capabilities/default.json`）
 
-第2フェーズ：方針決定・DB設計
+第3フェーズ：方針決定・DB設計
 
 09. ADR-003：SQLiteはRustのコマンド経由で利用／DBファイルの暗号化方式の決定
 10. DB設計書（テーブル定義・ER図・IndexedDBとの項目対応表・マイグレーション手順）
 11. コマンド一覧と受け渡しの型の定義（DTO相当）
 
-第3フェーズ：機能ごとにSQLiteへ移行（Rust＋JSを一続きで）
+第4フェーズ：機能ごとにSQLiteへ移行（Rust＋JSを一続きで）
 
 12. 共通設定の読込・保存
 13. 利用者の一覧・読込
@@ -79,7 +79,7 @@ SQLite
 15. IndexedDBからの移行（08のJSONをRust側で取り込み）
 16. IndexedDB関連コードの削除・capabilitiesを独自コマンドのみに限定
 
-第4フェーズ：PDF・運用
+第5フェーズ：PDF・運用
 
 17. PDF出力の基準テスト（47項目の座標・印字内容の回帰確認）
 18. PDF生成の分離と座標・テンプレートの版管理（17で出力不変を確認）
