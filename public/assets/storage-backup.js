@@ -268,7 +268,10 @@ async function importBackup(file) {
   }
 
   const currentMemberCount = await getCurrentMemberCount();
-  const exportedAt = typeof backup.exportedAt === "string" ? backup.exportedAt : "不明";
+  const exportedDate = new Date(backup.exportedAt);
+  const exportedAt = Number.isNaN(exportedDate.getTime())
+    ? "不明"
+    : exportedDate.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
   const confirmed = confirm(
     `現在のデータ（利用者 ${currentMemberCount} 件）をすべて置き換え、` +
       `バックアップ（利用者 ${backup.members.length} 件・保存日時 ${exportedAt}）を復元します。よろしいですか？`
