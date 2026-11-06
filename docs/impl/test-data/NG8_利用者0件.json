@@ -1,0 +1,24 @@
+{
+  "format": "caredoc-backup",
+  "formatVersion": 1,
+  "exportedAt": "2026-11-06T12:08:00+09:00",
+  "app": "care-doc-lib",
+  "members": [],
+  "settings": {
+    "surveyAddress": "東京都中央区高浜橋1-3-9 新町センタービル3F",
+    "surveyPhone": "020-0910-7703",
+    "facilityName": "高浜橋なごみケアホーム",
+    "facilityPhone": "020-0910-7703",
+    "institutionName": "すこやかメディカルセンター",
+    "institutionAddress": "東京都中央区東光川5-6-3",
+    "agentName": "山田 太郎",
+    "agentPostal": "104-8721",
+    "agentAddress": "東京都中央区高浜橋1-3-9 新町センタービル3F",
+    "agentPhone": "020-0910-7703",
+    "doctorName": "井上 直樹",
+    "clinicName": "すこやかメディカルセンター",
+    "clinicPostal": "104-8739",
+    "clinicAddress": "東京都中央区東光川5-6-3",
+    "clinicPhone": "020-0802-8647"
+  }
+}
