@@ -257,6 +257,14 @@ h3 {
     border: 1px solid #f5c6cb;
 }
 
+.notice {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-left: 4px solid #e67e22;
+    background-color: #fff8e8;
+    font-size: 14px;
+}
+
 /* 利用者一覧テーブル */
 .member-table {
     width: 100%;
