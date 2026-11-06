@@ -26,27 +26,30 @@ CareDocLib は当初 Cloudflare Pages 上で動作する静的 Web アプリと�
 ### 目指すアーキテクチャ
 
 ```text
-View
+[フロントエンド：JS（WebView）]
+View（HTML）
  ↓
-Controller
+画面ロジック（admin.js / main.js）
  ↓
-Service
+PDF生成（pdf-lib）※フロントエンドに残す
+ ↓ invoke（アプリ独自のコマンドのみ許可）
+[バックエンド：Rust]
+Command（Controller相当）
+ ↓
+Service（業務ルール・入力チェック）
  ↓
 Repository
  ↓
-DB
-
-Entity
- └─ Value Object
-
-Entity
- ⇄ Mapper ⇄ DTO
+SQLite
 ```
 
-責務分離を徹底し、長期保守・機能追加・永続化方式変更に強い構成を目指す。
+- 画面からはSQLを直接実行させない（tauri-plugin-sql 等は使わない）
+- JSとRustの受け渡しの型をDTO相当として先に定義する
+- 実装は機能ごとにフロントエンドからバックエンドまで一続きで作り、都度統合する
 
 ---
-第0フェーズ：要件定義・設計
+
+第0フェーズ：要件定義・設計（済）
 
 01. [ユースケース整理](docs/use-cases.md)
 02. [機能要件定義書](docs/functional-requirements.md)
@@ -56,45 +59,32 @@ Entity
 06. [基本設計書](docs/basic-design.md)
 07. [画面設計書](docs/screen-design.md)
 
-第1フェーズ：ドメイン・データ設計
+第1フェーズ：安全網（最優先）
 
-08. ドメインモデル図作成
-09. DB構造整理
-10. ER図作成
-11. Entity定義
-12. Value Object定義
-13. DTO定義
-14. Mapper定義
+08. バックアップ（JSON書き出し・読み込み。現行IndexedDBのまま）（済）— [実装手順書](docs/impl/08-backup.md)
 
-第2フェーズ：アーキテクチャ設計
+※ CSP・capabilities の絞り込みは対応済み（`tauri.conf.json` / `capabilities/default.json`）
 
-15. Repository契約設計
-16. Repository層導入
-17. Service責務定義
-18. Service層導入
-19. PDFエンジン疎結合化
-20. Controller層導入
-21. 契約クラス（Interface相当）導入
-22. フォルダ構成設計
+第2フェーズ：方針決定・DB設計
 
-第3フェーズ：品質向上
+09. ADR-003：SQLiteはRustのコマンド経由で利用／DBファイルの暗号化方式の決定
+10. DB設計書（テーブル定義・ER図・IndexedDBとの項目対応表・マイグレーション手順）
+11. コマンド一覧と受け渡しの型の定義（DTO相当）
 
-23. バリデーション統一
-24. 例外設計
-25. ログ設計
-26. 単体テスト導入
-27. 結合テスト導入
-28. E2Eテスト導入
+第3フェーズ：機能ごとにSQLiteへ移行（Rust＋JSを一続きで）
 
-第4フェーズ：永続化強化
+12. 共通設定の読込・保存
+13. 利用者の一覧・読込
+14. 利用者の保存・削除（入力チェック・エラー形式の統一、Rust単体テスト）
+15. IndexedDBからの移行（08のJSONをRust側で取り込み）
+16. IndexedDB関連コードの削除・capabilitiesを独自コマンドのみに限定
 
-29. SQLite対応
-30. Migration戦略策定
+第4フェーズ：PDF・運用
 
-第5フェーズ：運用・セキュリティ
-
-31. バックアップ戦略
-32. セキュリティ強化
+17. PDF出力の基準テスト（47項目の座標・印字内容の回帰確認）
+18. PDF生成の分離と座標・テンプレートの版管理（17で出力不変を確認）
+19. ログ方針（個人情報を出力しない）・エラー時の通知
+20. 配布・コード署名・更新方法（インストーラー、アップデート手順）
 
 ---
 
@@ -112,6 +102,7 @@ care-doc-lib/
 │   │   ├── pdf-draw.js            # 描画(drawText/drawCircle/mapCareLevel)・PDF生成(generate)
 │   │   ├── pdf-export.js          # PDFファイル名生成・ダウンロード・PDF系ボタン登録
 │   │   ├── storage-core.js        # フィールド定義・IndexedDB基盤(openDB/tx/collectFields/applyFields)
+│   │   ├── storage-backup.js      # IndexedDBのJSONバックアップ・復元・検証
 │   │   ├── storage-crud.js        # 利用者CRUD（保存/読込/削除）・共通設定の保存/復元
 │   │   ├── storage-seed.js        # 初期データ(SEED)・PDF画面のDB初期化
 │   │   ├── main.js                # PDF画面の起動
@@ -176,6 +167,7 @@ src-tauri/target/release/bundle/
 - 年は西暦で入力・印字（テンプレの年欄は元号印字のない自由記入欄）
 - 性別・要介護度は「〇」で該当欄を囲む
 - データ保存（IndexedDB）: 利用者（複数）＋共通設定（1件）を端末内に保存（後述）
+- バックアップ: 利用者と共通設定のJSON書き出し・全件置き換えによる復元（復元前の自動バックアップ付き）
 - PDFファイル名: 保存時に `YYYY年M月D日_氏名様_介護認定申請書.pdf` を自動生成（例: `2026年8月7日_田中一郎様_介護認定申請書.pdf`）。氏名の空白は詰め、入力があれば末尾に「様」を付与（未入力時は「無名」で「様」なし）
 
 ---
