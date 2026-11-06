@@ -17,6 +17,10 @@ CareDocLib は当初 Cloudflare Pages 上で動作する静的 Web アプリと�
 
 ---
 
+<img width="948" height="668" alt="image" src="https://github.com/user-attachments/assets/48009725-1ce7-4543-87d3-e20ccdcf45fa" />
+
+---
+
 ## ロードマップ
 
 ### 目指すアーキテクチャ
