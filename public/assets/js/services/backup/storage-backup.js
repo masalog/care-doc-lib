@@ -114,7 +114,6 @@ function validateBackup(jsonText, fileSize) {
       settings[field] = backup.settings[field] ?? "";
     });
   }
-列
   return {
     ...backup,
     members,
