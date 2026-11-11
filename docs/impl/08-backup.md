@@ -13,7 +13,7 @@
 | `members` | `id`（自動採番の数値） | `MEMBER_FIELDS` の19項目（すべて文字列） |
 | `settings` | `id = "singleton"` | `SETTINGS_FIELDS` の15項目（すべて文字列）、1件のみ |
 
-項目定義は `public/assets/storage-core.js` の `MEMBER_FIELDS` / `SETTINGS_FIELDS` を正とする。
+項目定義は `public/assets/js/models/storage-core.js` の `MEMBER_FIELDS` / `SETTINGS_FIELDS` を正とする。
 
 ## 3. 制約（必ず守る）
 
@@ -28,10 +28,10 @@
 
 | ファイル | 変更 |
 |---|---|
-| `public/assets/storage-backup.js` | **新規**。書き出し・読み込み・検証の処理 |
+| `public/assets/js/services/backup/storage-backup.js` | **新規**。書き出し・読み込み・検証の処理 |
 | `public/admin.html` | ナビに「バックアップ」を追加、セクション追加、`<script>` 追加 |
-| `public/assets/admin.js` | `showSection` を3セクション対応に、ボタンのイベント登録を追加 |
-| `public/assets/style.css` | 必要なら最小限の追加 |
+| `public/assets/js/controllers/admin.js` | `showSection` を3セクション対応に、ボタンのイベント登録を追加 |
+| `public/assets/css/style.css` | 必要なら最小限の追加 |
 
 `admin.html` の読み込み順：
 ```

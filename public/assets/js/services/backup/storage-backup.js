@@ -1,7 +1,28 @@
+import { getDB, MEMBER_FIELDS, SETTINGS_FIELDS } from "../../models/storage-core.js";
+
+/**
+ * IndexedDBデータのJSONバックアップ、検証、復元を提供する。
+ * @fileoverview バックアップ形式の検証と復元処理。
+ */
 const MAX_BACKUP_SIZE = 5 * 1024 * 1024;
 const BACKUP_FORMAT = "caredoc-backup";
 const BACKUP_FORMAT_VERSION = 1;
 
+/**
+ * @typedef {Object} BackupData
+ * @property {string} format バックアップ形式識別子
+ * @property {number} formatVersion 形式バージョン
+ * @property {string} [exportedAt] 書き出し日時
+ * @property {Array<Record<string, string|number>>} members 利用者レコード
+ * @property {Record<string, string>|null} settings 共通設定レコード
+ */
+
+/**
+ * バックアップファイルのサイズが許容範囲内であることを検証する。
+ * @param {number} fileSize ファイルサイズ（バイト）
+ * @returns {void}
+ * @throws {Error} サイズが不正または5MBを超える場合
+ */
 function validateBackupSize(fileSize) {
   if (!Number.isFinite(fileSize) || fileSize < 0) {
     throw new Error("バックアップファイルのサイズを確認できません。");
@@ -11,6 +32,13 @@ function validateBackupSize(fileSize) {
   }
 }
 
+/**
+ * JSONを解析し、形式・各フィールド・利用者IDを検証して正規化する。
+ * @param {string} jsonText バックアップJSON文字
+ * @param {number} fileSize ファイルサイズ（バイト）
+ * @returns {BackupData} 検証済みバックアップ
+ * @throws {Error} JSONまたはデータ形式が不正な場合
+ */
 function validateBackup(jsonText, fileSize) {
   validateBackupSize(fileSize);
 
@@ -86,7 +114,6 @@ function validateBackup(jsonText, fileSize) {
       settings[field] = backup.settings[field] ?? "";
     });
   }
-
   return {
     ...backup,
     members,
@@ -94,6 +121,12 @@ function validateBackup(jsonText, fileSize) {
   };
 }
 
+/**
+ * バックアップ保存用のファイル名を作成する。
+ * @param {boolean} [beforeRestore=false] 復元前バックアップの場合はtrue
+ * @param {Date} [date=new Date()] ファイル名に使用する日時
+ * @returns {string} JSONファイル名
+ */
 function createBackupFilename(beforeRestore = false, date = new Date()) {
   const timestamp = [
     date.getFullYear(),
@@ -108,6 +141,12 @@ function createBackupFilename(beforeRestore = false, date = new Date()) {
   return `caredoc-backup_${suffix}${timestamp}.json`;
 }
 
+/**
+ * バックアップデータをJSONファイルとしてダウンロードさせる。
+ * @param {BackupData} backup 書き出すバックアップデータ
+ * @param {boolean} [beforeRestore=false] 復元前バックアップの場合はtrue
+ * @returns {void}
+ */
 function downloadBackup(backup, beforeRestore = false) {
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -123,6 +162,14 @@ function downloadBackup(backup, beforeRestore = false) {
   }
 }
 
+/**
+ * レコードから許可されたフィールドのみを含むバックアップ用データを作成する。
+ * @param {Record<string, string|number>} record 元レコード
+ * @param {string[]} fields コピーするフィールド名
+ * @param {boolean} [includeId=false] 利用者IDを含める場合はtrue
+ * @returns {Record<string, string|number>} バックアップ用レコード
+ * @throws {Error} IDまたはフィールド値が不正な場合
+ */
 function createBackupRecord(record, fields, includeId = false) {
   const data = {};
   if (includeId) {
@@ -141,13 +188,19 @@ function createBackupRecord(record, fields, includeId = false) {
   return data;
 }
 
-function exportBackup({ beforeRestore = false } = {}) {
+/**
+ * IndexedDBから利用者と共通設定を読み出し、JSONバックアップを作成する。
+ * @param {{beforeRestore?: boolean}} [options] 復元前バックアップとして作成する場合のオプション
+ * @returns {Promise<BackupData>} 作成したバックアップ
+ * @throws {Error} トランザクションまたはデータの処理に失敗した場合
+ */
+export function exportBackup({ beforeRestore = false } = {}) {
   return new Promise((resolve, reject) => {
     let transaction;
     let membersRequest;
     let settingsRequest;
     try {
-      transaction = db.transaction(["members", "settings"], "readonly");
+      transaction = getDB().transaction(["members", "settings"], "readonly");
       membersRequest = transaction.objectStore("members").getAll();
       settingsRequest = transaction.objectStore("settings").get("singleton");
     } catch (error) {
@@ -185,6 +238,12 @@ function exportBackup({ beforeRestore = false } = {}) {
   });
 }
 
+/**
+ * 選択されたバックアップファイルをUTF-8テキストとして読み込む。
+ * @param {File} file 読み込むファイル
+ * @returns {Promise<string>} ファイル内容
+ * @throws {Error} ファイル読み込みに失敗または中断した場合
+ */
 function readBackupFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -202,12 +261,17 @@ function readBackupFile(file) {
   });
 }
 
+/**
+ * 現在IndexedDBに登録されている利用者数を取得する。
+ * @returns {Promise<number>} 利用者件数
+ * @throws {Error} 読み込みトランザクションに失敗した場合
+ */
 function getCurrentMemberCount() {
   return new Promise((resolve, reject) => {
     let transaction;
     let request;
     try {
-      transaction = db.transaction("members", "readonly");
+      transaction = getDB().transaction("members", "readonly");
       request = transaction.objectStore("members").count();
     } catch (error) {
       reject(error);
@@ -224,11 +288,17 @@ function getCurrentMemberCount() {
   });
 }
 
+/**
+ * バックアップ内容で利用者・設定ストアを置き換える。
+ * @param {BackupData} backup 復元する検証済みバックアップ
+ * @returns {Promise<void>}
+ * @throws {Error} 復元または画面データの再読み込みに失敗した場合
+ */
 function restoreBackupData(backup) {
   return new Promise((resolve, reject) => {
     let transaction;
     try {
-      transaction = db.transaction(["members", "settings"], "readwrite");
+      transaction = getDB().transaction(["members", "settings"], "readwrite");
       const membersStore = transaction.objectStore("members");
       const settingsStore = transaction.objectStore("settings");
       membersStore.clear();
@@ -249,18 +319,18 @@ function restoreBackupData(backup) {
     transaction.onabort = () => {
       reject(transactionError ?? new Error("復元処理が中断されました。"));
     };
-    transaction.oncomplete = async () => {
-      try {
-        await Promise.all([refreshMembers(), loadAdminSettings()]);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    };
+    transaction.oncomplete = () => resolve();
   });
 }
 
-async function importBackup(file) {
+/**
+ * ファイルを検証し、確認後に現データのバックアップを作成してから復元する。
+ * @param {File} file 復元するバックアップファイル
+ * @param {() => Promise<unknown>} afterRestore 復元後に画面データを再読み込みする処理
+ * @returns {Promise<{membersCount: number, hasSettings: boolean}|null>} 復元結果。ユーザーが確認を取り消した場合はnull
+ * @throws {Error} 検証、読み込み、バックアップ、復元に失敗した場合
+ */
+export async function importBackup(file, afterRestore) {
   validateBackupSize(file.size);
   const backup = validateBackup(await readBackupFile(file), file.size);
   if (backup.members.length === 0) {
@@ -280,6 +350,7 @@ async function importBackup(file) {
 
   await exportBackup({ beforeRestore: true });
   await restoreBackupData(backup);
+  await afterRestore();
   return {
     membersCount: backup.members.length,
     hasSettings: backup.settings !== null,

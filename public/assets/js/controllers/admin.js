@@ -1,7 +1,26 @@
+import { $ } from "../dom.js";
+import { MEMBER_FIELDS, openDB, SETTINGS_FIELDS, tx } from "../models/storage-core.js";
+import { seedIfEmpty } from "../models/storage-seed.js";
+import { exportBackup, importBackup } from "../services/backup/storage-backup.js";
+
+/**
+ * 管理画面の操作、表示更新、フォームとデータ層の連携を行う。
+ * @fileoverview 管理画面の操作、表示更新、フォームとデータ層の連携。
+ */
+/** @type {HTMLFormElement} */
 const memberForm = $("member-form");
+/** @type {HTMLFormElement} */
 const settingsForm = $("settings-form");
+/** @type {Array<Record<string, string|number>>} */
 let adminMembers = [];
 
+/**
+ * 管理画面のメッセージ領域を更新する。
+ * @param {string} id メッセージ要素のID
+ * @param {string} message 表示するメッセージ
+ * @param {boolean} [isError=false] エラーとして表示する場合はtrue
+ * @returns {void}
+ */
 function showAdminMessage(id, message, isError = false) {
   const element = $(id);
   element.textContent = message;
@@ -9,6 +28,12 @@ function showAdminMessage(id, message, isError = false) {
   element.classList.toggle("success", !isError && Boolean(message));
 }
 
+/**
+ * 指定した管理画面セクションを表示し、ナビゲーション状態を更新する。
+ * @param {string} name 表示するセクション名
+ * @param {HTMLElement|null} button 選択中ボタン。指定しない場合は選択状態を追加しない
+ * @returns {void}
+ */
 function showSection(name, button) {
   $("section-members").classList.toggle("hidden", name !== "members");
   $("section-settings").classList.toggle("hidden", name !== "settings");
@@ -17,6 +42,10 @@ function showSection(name, button) {
   if (button) button.classList.add("active");
 }
 
+/**
+ * ナビゲーション、利用者、設定、バックアップ関連のイベントを登録する。
+ * @returns {void}
+ */
 function bindAdminActions() {
   document.querySelectorAll("[data-section]").forEach((button) => {
     button.addEventListener("click", () => showSection(button.dataset.section, button));
@@ -48,7 +77,8 @@ function bindAdminActions() {
 
     showAdminMessage("backup-message", "");
     try {
-      const result = await importBackup(file);
+      const result = await importBackup(file, () =>
+        Promise.all([refreshMembers(), loadAdminSettings()]));
       if (result) {
         showAdminMessage(
           "backup-message",
@@ -63,6 +93,13 @@ function bindAdminActions() {
   });
 }
 
+/**
+ * 指定範囲の値を選択要素に設定する。
+ * @param {string} id 選択要素のID
+ * @param {number} first 先頭値
+ * @param {number} last 末尾値
+ * @returns {void}
+ */
 function fillDateSelect(id, first, last) {
   const select = $(id);
   select.replaceChildren(new Option("--", ""));
@@ -71,6 +108,10 @@ function fillDateSelect(id, first, last) {
   }
 }
 
+/**
+ * 利用者フォームの日付選択肢を現在年に基づいて設定する。
+ * @returns {void}
+ */
 function prepareDateFields() {
   const thisYear = new Date().getFullYear();
   ["m-birth-year", "m-start-year", "m-end-year", "m-inst-year"].forEach((id) =>
@@ -81,6 +122,13 @@ function prepareDateFields() {
     fillDateSelect(id, 1, 31));
 }
 
+/**
+ * 指定フィールドのデータをフォームに反映し、既存値が選択肢にない場合は追加する。
+ * @param {HTMLFormElement} form 値を設定するフォーム
+ * @param {Record<string, string|number|null|undefined>} values 反映するデータ
+ * @param {string[]} fields 反映対象のフィールド名
+ * @returns {void}
+ */
 function setFormValues(form, values, fields) {
   fields.forEach((field) => {
     const input = form.elements.namedItem(field);
@@ -103,6 +151,12 @@ function setFormValues(form, values, fields) {
   });
 }
 
+/**
+ * フォームから指定フィールドの文字列値を収集する。
+ * @param {HTMLFormElement} form 値を取得するフォーム
+ * @param {string[]} fields 取得対象のフィールド名
+ * @returns {Record<string, string>} フィールド名と入力値の組
+ */
 function getFormValues(form, fields) {
   return Object.fromEntries(fields.map((field) => [
     field,
@@ -110,6 +164,13 @@ function getFormValues(form, fields) {
   ]));
 }
 
+/**
+ * 生年月日を検証する。いずれかが未入力の場合は既存仕様に従い有効とする。
+ * @param {string} year 年
+ * @param {string} month 月
+ * @param {string} day 日
+ * @returns {boolean} 有効な日付または未入力の場合はtrue
+ */
 function isValidDate(year, month, day) {
   // 未入力は既存仕様どおり許可
   if (!year || !month || !day) return true;
@@ -127,6 +188,11 @@ function isValidDate(year, month, day) {
   );
 }
 
+/**
+ * 新規登録または指定利用者の編集フォームを表示する。
+ * @param {string|number} [memberId=""] 編集対象の利用者ID。空の場合は新規登録
+ * @returns {void}
+ */
 function showMemberForm(memberId = "") {
   memberForm.reset();
   $("member-id").value = "";
@@ -146,12 +212,20 @@ function showMemberForm(memberId = "") {
   $("member-form-container").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/**
+ * 利用者フォームを閉じ、入力状態をリセットする。
+ * @returns {void}
+ */
 function hideMemberForm() {
   $("member-form-container").classList.add("hidden");
   memberForm.reset();
   $("member-id").value = "";
 }
 
+/**
+ * 利用者一覧を画面に描画する。
+ * @returns {void}
+ */
 function renderMemberList() {
   const container = $("member-list");
   container.replaceChildren();
@@ -192,6 +266,10 @@ function renderMemberList() {
   container.appendChild(table);
 }
 
+/**
+ * IndexedDBから利用者を取得し、一覧表示を更新する。
+ * @returns {Promise<void>} 読み込みと描画の完了
+ */
 function refreshMembers() {
   return new Promise((resolve, reject) => {
     const request = tx("members", "readonly").getAll();
@@ -204,6 +282,10 @@ function refreshMembers() {
   });
 }
 
+/**
+ * 利用者フォームの入力を検証し、新規登録または更新する。
+ * @returns {void}
+ */
 function saveMember() {
   if (!memberForm.reportValidity()) return;
 
@@ -268,6 +350,11 @@ function saveMember() {
   };
 }
 
+/**
+ * 指定した利用者を確認後に削除し、一覧を再読み込みする。
+ * @param {number} memberId 削除する利用者ID
+ * @returns {void}
+ */
 function removeMember(memberId) {
   const member = adminMembers.find((item) => item.id === memberId);
   if (!member || !confirm(`利用者「${member.name}」を削除しますか？`)) return;
@@ -284,6 +371,10 @@ function removeMember(memberId) {
   };
 }
 
+/**
+ * 保存済み共通設定を読み込み、管理フォームに反映する。
+ * @returns {Promise<void>} 読み込みの完了
+ */
 function loadAdminSettings() {
   return new Promise((resolve, reject) => {
     const request = tx("settings", "readonly").get("singleton");
@@ -295,6 +386,10 @@ function loadAdminSettings() {
   });
 }
 
+/**
+ * 管理画面の共通設定を保存する。
+ * @returns {void}
+ */
 function saveSettings() {
   const data = getFormValues(settingsForm, SETTINGS_FIELDS);
   data.id = "singleton";
@@ -324,10 +419,14 @@ function saveSettings() {
     );
 }
 
+/**
+ * 管理画面のイベント、IndexedDB、利用者一覧、共通設定を初期化する。
+ * @returns {Promise<void>}
+ */
 async function initializeAdmin() {
   bindAdminActions();
   try {
-    db = await openDB();
+    await openDB();
     await seedIfEmpty();
     prepareDateFields();
     await Promise.all([refreshMembers(), loadAdminSettings()]);

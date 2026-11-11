@@ -1,13 +1,23 @@
-// ===================== データ保存: 利用者CRUD・共通設定 =====================
-// 依存: pdf-core.js（$, setStatus）, storage-core.js（tx, collectFields, applyFields, MEMBER_FIELDS, SETTINGS_FIELDS）
-// 読み込み順: pdf-core.js → storage-core.js → このファイル
-// ---- 利用者 ----
+import { $ } from "../dom.js";
+import { applyFields, collectFields, MEMBER_FIELDS, SETTINGS_FIELDS, tx } from "./storage-core.js";
+import { resetPdfState, setStatus } from "../services/pdf/pdf-core.js";
+
+/**
+ * 利用者と共通設定のIndexedDB読み書き、およびPDFプレビュー状態の管理を行う。
+ * @fileoverview 利用者と共通設定のIndexedDB読み書き、PDFプレビュー状態の管理。
+ */
 
 let settingsLoaded = false;
 let memberLoadSequence = 0;
 let memberGeneration = 0;
+let activeMember = null;
+let activeSettings = {};
 
-async function loadMemberList() {
+/**
+ * 利用者一覧を読み込み、選択リストを更新する。
+ * @returns {Promise<void>}
+ */
+export async function loadMemberList() {
   const sel = $("memberSelect");
   const cur = sel.value;
 
@@ -27,7 +37,12 @@ async function loadMemberList() {
   };
 }
 
-function loadMember(id) {
+/**
+ * 指定された利用者を読み込み、フォームと共有状態を更新する。
+ * @param {string|number} id 利用者ID。空値の場合は選択を解除する
+ * @returns {void}
+ */
+export function loadMember(id) {
   memberGeneration++;
   resetPdfState();
 
@@ -85,7 +100,11 @@ function loadMember(id) {
   };
 }
 
-async function saveMember() {
+/**
+ * 入力中の利用者情報を新規登録または更新する。
+ * @returns {Promise<void>}
+ */
+export async function saveMember() {
   const sel = $("memberSelect");
   const data = collectFields(MEMBER_FIELDS);
   if (!data.name) { setStatus("氏名を入力してから保存してください"); return; }
@@ -103,37 +122,11 @@ async function saveMember() {
   };
 }
 
-function resetPdfState() {
-  lastPdfBytes = null;
-
-  if (lastUrl) {
-    URL.revokeObjectURL(lastUrl);
-    lastUrl = null;
-  }
-
-  const preview = $("previewFrame");
-  if (preview) {
-    preview.src = "";
-    preview.classList.add("is-hidden");
-  }
-
-  const placeholder = $("previewPlaceholder");
-  if (placeholder) {
-    placeholder.style.display = "block";
-  }
-
-  const downloadBtn = $("dlBtn");
-  if (downloadBtn) {
-    downloadBtn.disabled = true;
-  }
-
-  const previewBar = $("previewBar");
-  if (previewBar) {
-    previewBar.style.display = "none";
-  }
-}
-
-async function deleteMember() {
+/**
+ * 選択中の利用者を確認後に削除する。
+ * @returns {Promise<void>}
+ */
+export async function deleteMember() {
   const sel = $("memberSelect");
   if (!sel.value) return;
   if (!confirm("この利用者データを削除しますか？")) return;
@@ -147,8 +140,11 @@ async function deleteMember() {
   };
 }
 
-// ---- 共通設定（1件） ----
-function saveSettings() {
+/**
+ * 画面の共通設定を1件のレコードとして保存する。
+ * @returns {void}
+ */
+export function saveSettings() {
   const data = collectFields(SETTINGS_FIELDS);
   data.id = "singleton";
   const store = tx("settings", "readwrite");
@@ -159,7 +155,11 @@ function saveSettings() {
   };
 }
 
-function loadSettings() {
+/**
+ * 保存済み共通設定を読み込み、フォームと共有状態を更新する。
+ * @returns {void}
+ */
+export function loadSettings() {
   const req = tx("settings", "readonly").get("singleton");
 
   req.onsuccess = () => {
@@ -175,3 +175,8 @@ function loadSettings() {
     settingsLoaded = true;
   };
 }
+
+export const getActiveMember = () => activeMember;
+export const getActiveSettings = () => activeSettings;
+export const areSettingsLoaded = () => settingsLoaded;
+export const getMemberGeneration = () => memberGeneration;

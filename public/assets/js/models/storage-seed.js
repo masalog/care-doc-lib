@@ -1,8 +1,20 @@
-// ===================== 初期データ（SEED）・起動・イベント登録 =====================
-// 依存: pdf-core.js（$, setStatus）, storage-db.js（db, tx, openDB, loadMemberList, loadSettings,
-//        loadMember, saveMember, deleteMember, saveSettings）
-// 読み込み順: pdf-core.js → storage-db.js → このファイル
-// CareDocWeb の DataInitializer と同じ初期データ（初回起動時のみ投入）
+import { $ } from "../dom.js";
+import { openDB, tx } from "./storage-core.js";
+import {
+  deleteMember,
+  loadMember,
+  loadMemberList,
+  loadSettings,
+  saveMember,
+  saveSettings,
+} from "./storage-crud.js";
+import { setStatus } from "../services/pdf/pdf-core.js";
+
+/**
+ * 初回起動時の初期データ投入と、PDF画面・管理画面向けのデータ層初期化を提供する。
+ * @fileoverview 初期データ投入とデータ層の画面向け初期化。
+ */
+/** @type {Array<Record<string, string>>} */
 const SEED_MEMBERS = [
   {"insuranceIdNumber":"1310204536","name":"田中 一郎","furigana":"タナカ イチロウ","birthYear":"1943","birthMonth":"2","birthDay":"15","gender":"男","address":"東京都中央区青葉町 3-5-7","phone":"020-9123-4567","careLevel":"要支援2","startYear":"2025","startMonth":"6","startDay":"1","endYear":"2026","endMonth":"5","endDay":"31","institutionYear":"2025","institutionMonth":"7","institutionDay":"1"},
   {"insuranceIdNumber":"1310347811","name":"佐藤 徹子","furigana":"サトウ テツコ","birthYear":"1936","birthMonth":"12","birthDay":"30","gender":"女","address":"東京都中央区南風町 5-3-6","phone":"020-7890-1123","careLevel":"要介護2","startYear":"2025","startMonth":"6","startDay":"1","endYear":"2026","endMonth":"5","endDay":"31","institutionYear":"2025","institutionMonth":"7","institutionDay":"20"},
@@ -12,6 +24,7 @@ const SEED_MEMBERS = [
   {"insuranceIdNumber":"1310458923","name":"鈴木 美智子","furigana":"スズキ ミチコ","birthYear":"1945","birthMonth":"3","birthDay":"22","gender":"女","address":"東京都中央区桜町 4-8-2","phone":"020-5567-8912","careLevel":"要介護3","startYear":"2025","startMonth":"6","startDay":"1","endYear":"2026","endMonth":"5","endDay":"31","institutionYear":"2025","institutionMonth":"9","institutionDay":"15"},
   {"insuranceIdNumber":"1310123498","name":"中川 由紀","furigana":"ナカガワ ユキ","birthYear":"1937","birthMonth":"1","birthDay":"12","gender":"女","address":"東京都中央区白樺町 1-9-3","phone":"020-4456-7789","careLevel":"要介護5","startYear":"2025","startMonth":"6","startDay":"1","endYear":"2026","endMonth":"5","endDay":"31","institutionYear":"2025","institutionMonth":"10","institutionDay":"10"},
 ];
+/** @type {Record<string, string>} */
 const SEED_SETTINGS = {
   id:"singleton",
   surveyAddress:"東京都中央区高浜橋1-3-9 新町センタービル3F", surveyPhone:"020-0910-7703",
@@ -21,7 +34,11 @@ const SEED_SETTINGS = {
   doctorName:"井上 直樹", clinicName:"すこやかメディカルセンター", clinicPostal:"104-8739", clinicAddress:"東京都中央区東光川5-6-3", clinicPhone:"020-0802-8647",
 };
 
-function seedIfEmpty() {
+/**
+ * 利用者ストアが空の場合に限り、初期利用者と共通設定を投入する。
+ * @returns {Promise<boolean>} 初期データを投入した場合はtrue
+ */
+export function seedIfEmpty() {
   return new Promise((resolve) => {
     const req = tx("members", "readonly").count();
     req.onsuccess = () => {
@@ -38,9 +55,13 @@ function seedIfEmpty() {
   });
 }
 
-async function initStorage() {
+/**
+ * IndexedDBを初期化し、画面に必要な初期データとイベントを設定する。
+ * @returns {Promise<void>}
+ */
+export async function initStorage() {
   try {
-    db = await openDB();
+    await openDB();
     await seedIfEmpty();   // 初回のみ CareDocWeb と同じ初期データを投入
     await loadMemberList();
     loadSettings();  // 起動時に共通設定を自動復元
