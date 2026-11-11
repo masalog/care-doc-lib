@@ -95,23 +95,17 @@ care-doc-lib/
 ├── public/                        # フロントエンド資産（Tauriから読み込み）
 │   ├── index.html                 # PDF作成画面（利用者選択 → PDF生成・プレビュー）
 │   ├── admin.html                 # 利用者・共通設定の管理画面
-│   ├── assets/                    # アプリのコード・ライブラリ
-│   │   ├── style.css              # 画面共通スタイル
-│   │   ├── admin.js               # 管理画面の利用者CRUD・共通設定
-│   │   ├── pdf-core.js            # 共有変数・共通ヘルパー（$, setStatus 等）・アセット読込(bootstrap)
-│   │   ├── pdf-draw.js            # 描画(drawText/drawCircle/mapCareLevel)・PDF生成(generate)
-│   │   ├── pdf-export.js          # PDFファイル名生成・ダウンロード・PDF系ボタン登録
-│   │   ├── storage-core.js        # フィールド定義・IndexedDB基盤(openDB/tx/collectFields/applyFields)
-│   │   ├── storage-backup.js      # IndexedDBのJSONバックアップ・復元・検証
-│   │   ├── storage-crud.js        # 利用者CRUD（保存/読込/削除）・共通設定の保存/復元
-│   │   ├── storage-seed.js        # 初期データ(SEED)・PDF画面のDB初期化
-│   │   ├── main.js                # PDF画面の起動
-│   │   ├── pdf-lib.min.js         # PDF描画ライブラリ
-│   │   └── fontkit.umd.min.js     # 日本語フォント埋め込み用
-│   └── data/                      # テンプレ・フォント・座標
-│       ├── template.pdf           # 介護認定申請書テンプレPDF（A4縦 595.32×842.04）
-│       ├── NotoSansJP-Regular.ttf # 埋め込み用日本語フォント（約5.4MB）
-│       └── positions.json         # 座標データ（47フィールド・元YAMLと同一値）
+│   ├── assets/
+│   │   ├── css/
+│   │   │   └── style.css          # 画面共通スタイル（View）
+│   │   ├── js/
+│   │   │   ├── controllers/       # 画面操作（admin.js / main.js）
+│   │   │   ├── models/            # IndexedDB・利用者・設定データ
+│   │   │   └── services/
+│   │   │       ├── backup/        # JSONバックアップ・復元
+│   │   │       └── pdf/           # PDF描画・生成・出力
+│   │   └── vendor/                # pdf-lib、fontkit
+│   └── data/                      # テンプレPDF、フォント、座標データ
 │
 ├── src-tauri/              # Tauriデスクトップアプリ
 │   ├── Cargo.toml
@@ -126,6 +120,8 @@ care-doc-lib/
 
 ```
 ---
+
+各JavaScriptの責務と関数はJSDocで記載しています。整理の背景とMVC上の配置方針は[フロントエンド資産のフォルダ整理方針](docs/assets-organization.md)を参照してください。
 
 ## Tauri デスクトップ版
 
