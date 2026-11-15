@@ -1,16 +1,14 @@
 /**
- * 共通のDOM参照ヘルパー
+ * HTML要素のIDを指定して要素を取得する。
  *
- * HTML要素を取得するときに使用する。
- * document.getElementById() を毎回書く代わりに、
- * 短く記述できるようにしている。
+ * document.getElementById() のショートハンドとして利用する。
  *
- * 使用例
+ * 使用例:
  * $("userName")
  * → document.getElementById("userName")
  *
- * $("saveButton")
- * → document.getElementById("saveButton")
+ * @param {string} id 取得したいHTML要素のID
+ * @returns {HTMLElement|null} 取得したHTML要素。存在しない場合は null
  */
 export function $(id) {
   // 指定されたIDを持つHTML要素を取得して返す
