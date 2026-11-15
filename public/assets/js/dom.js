@@ -1,11 +1,16 @@
 /**
- * 共通のDOM参照ヘルパーを提供する。
- * @fileoverview アプリケーション画面で使うDOM参照ヘルパー。
+ * HTML要素のIDを指定して要素を取得する。
+ *
+ * document.getElementById() のショートハンドとして利用する。
+ *
+ * 使用例:
+ * $("userName")
+ * → document.getElementById("userName")
+ *
+ * @param {string} id 取得したいHTML要素のID
+ * @returns {HTMLElement|null} 取得したHTML要素。存在しない場合は null
  */
-
-/**
- * IDから画面要素を取得する。
- * @param {string} id HTML要素のID
- * @returns {HTMLElement|null} 該当要素。存在しない場合はnull
- */
-export const $ = (id) => document.getElementById(id);
+export function $(id) {
+  // 指定されたIDを持つHTML要素を取得して返す
+  return document.getElementById(id);
+}

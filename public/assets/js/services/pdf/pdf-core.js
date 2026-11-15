@@ -7,15 +7,39 @@ import { $ } from "../../dom.js";
  */
 const PDFLib = window.PDFLib;
 
-/** @type {Uint8Array|null} */
+/**
+ * PDFテンプレート
+ * 起動時は未読込なので null
+ * @type {Uint8Array|null}
+ */
 let templateBytes = null;
-/** @type {Uint8Array|null} */
+
+/**
+ * 日本語フォント
+ * bootstrap() 実行後に値が入る
+ * @type {Uint8Array|null}
+ */
 let fontBytes = null;
-/** @type {{fields: Record<string, {x: number, y: number, fontSize: number}>}|null} */
+
+/**
+ * PDFへ文字を描画する位置情報
+ * positions.json 読込後に設定される
+ * @type {Object|null}
+ */
 let layout = null;
-/** @type {Uint8Array|null} */
+
+/**
+ * 最後に生成したPDF
+ * PDF生成前は存在しない
+ * @type {Uint8Array|null}
+ */
 let lastPdfBytes = null;
-/** @type {string|null} */
+
+/**
+ * PDFプレビュー用URL
+ * PDF生成後に作成される
+ * @type {string|null}
+ */
 let lastUrl = null;
 
 /**
@@ -24,22 +48,53 @@ let lastUrl = null;
  * @param {boolean} [ok=false] 成功状態として表示する場合はtrue
  * @returns {void}
  */
-export const setStatus = (msg, ok=false) => {
-  const s = $("status") || $("admin-status");
-  if (!s) return;
-  s.textContent = msg;
-  s.style.color = ok ? "var(--ok)" : "var(--muted)";
-};
+export function setStatus(msg, ok = false) {
+
+  // status要素を取得
+  let statusElement = $("status");
+
+  // status要素が無い場合はadmin-statusを利用
+  if (!statusElement) {
+    statusElement = $("admin-status");
+  }
+
+  // 表示領域が存在しない場合は処理終了
+  if (!statusElement) {
+    return;
+  }
+
+  // メッセージを表示
+  statusElement.textContent = msg;
+
+  // 成功時と通常時で文字色を切り替える
+  if (ok) {
+    statusElement.style.color = "var(--ok)";
+  } else {
+    statusElement.style.color = "var(--muted)";
+  }
+}
 
 /**
  * PDF画面のエラーバナーを表示する。
+ * 
+ * 呼び出し時に渡されたメッセージで表示内容を更新し、
+ * 非表示状態のバナーを表示状態にする。
+ * 
  * @param {string} msg 表示するメッセージ
  * @returns {void}
  */
 export function showBanner(msg) {
+
+  // バナー表示領域を取得
   const b = $("banner");
+
+  // バナー領域が存在しない場合は終了
   if (!b) return;
+
+  // 表示するメッセージを設定
   b.textContent = msg;
+
+  // 非表示状態(display:none)のバナーを表示する
   b.style.display = "block";
 }
 
@@ -48,7 +103,22 @@ export function showBanner(msg) {
  * @param {string} id 入力要素のID
  * @returns {string} 入力値。要素がない場合は空文字列
  */
-export const v = (id) => $(id)?.value.trim() || "";
+export function getFormValue(id) {
+
+  // 指定したIDの要素を取得
+  const element = $(id);
+
+  // 要素が存在しない場合
+  if (!element) {
+    return "";
+  }
+
+  // 入力値を取得
+  const value = element.value;
+
+  // 前後の空白を削除して返す
+  return value.trim();
+}
 
 /**
  * URLからJSONまたはバイナリデータを取得する。
@@ -57,29 +127,97 @@ export const v = (id) => $(id)?.value.trim() || "";
  * @returns {Promise<unknown|Uint8Array>} 取得したJSONデータまたはバイト列
  * @throws {Error} HTTPレスポンスが成功でない場合
  */
-async function tryFetch(url, asJson=false) {
+async function tryFetch(url, asJson = false) {
+  // URLへHTTPリクエストを送信
   const res = await fetch(url);
-  if (!res.ok) throw new Error(url + " が読み込めません (" + res.status + ")");
-  return asJson ? await res.json() : new Uint8Array(await res.arrayBuffer());
+
+  // ステータスコードが成功(200番台)でない場合はエラーを発生させる
+  if (!res.ok) {
+    throw new Error(url + " が読み込めません (" + res.status + ")");
+  }
+
+  // asJson=true の場合はJSONとして解析して返す
+  if (asJson) {
+    return await res.json();
+  }
+
+  // それ以外の場合はレスポンスをArrayBufferで取得し、
+  // Uint8Array（バイト配列）に変換して返す
+  const buffer = await res.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  return bytes;  
 }
 
 /**
- * PDFテンプレート、座標データ、日本語フォントを読み込み、画面状態を更新する。
- * 読み込みに失敗した場合は画面にエラーを表示する。
+ * アプリ起動時の初期化処理
+ *
+ * 読み込むもの：
+ * - PDF編集ライブラリ(pdf-lib)
+ * - 座標設定ファイル(positions.json)
+ * - テンプレートPDF(template.pdf)
+ * - 日本語フォント(NotoSansJP-Regular.ttf)
+ * 
  * @returns {Promise<void>}
  */
 export async function bootstrap() {
-  if (!PDFLib) { showBanner("PDFライブラリが読み込めていません。pdf-lib.min.js の配置を確認してください。"); return; }
+
+  // pdf-lib が読み込まれているか確認
+  // 読み込めていない場合は以降の処理を中止
+  if (!PDFLib) {
+    showBanner(
+      "PDFライブラリが読み込めていません。pdf-lib.min.js の配置を確認してください。"
+    );
+    return;
+  }
+
   try {
+
+    // ==========================================
+    // 必要なアセット（外部ファイル）を読み込む
+    // ==========================================
+
+    // PDFに文字を配置するための座標情報(JSON)
     layout = await tryFetch("data/positions.json", true);
+
+    // PDFテンプレート本体
+    // Uint8Array として取得される
     templateBytes = await tryFetch("data/template.pdf");
+
+    // PDFに埋め込む日本語フォント
+    // Uint8Array として取得される
     fontBytes = await tryFetch("data/NotoSansJP-Regular.ttf");
+
+    // 設定されている入力項目数を取得
     const n = Object.keys(layout.fields).length;
-    if ($("assets")) $("assets").textContent = "座標:OK(" + n + ") / テンプレ:OK / フォント:OK";
-    setStatus("準備完了。『PDFを生成してプレビュー』を押してください", true);
+
+    // 画面上にアセット読込成功を表示
+    if ($("assets")) {
+      $("assets").textContent =
+        "座標:OK(" + n + ") / テンプレ:OK / フォント:OK";
+    }
+
+    // 初期化完了メッセージ
+    setStatus(
+      "準備完了。『PDFを生成してプレビュー』を押してください",
+      true
+    );
+
   } catch (e) {
-    if ($("assets")) $("assets").textContent = "アセット読込エラー";
-    showBanner("アセット読込エラー: " + e.message + " — ローカルサーバー経由で開いてください（file:// では動きません）。");
+
+    // ==========================================
+    // 読み込み失敗時
+    // ==========================================
+
+    if ($("assets")) {
+      $("assets").textContent = "アセット読込エラー";
+    }
+
+    // エラー内容をユーザーへ表示
+    showBanner(
+      "アセット読込エラー: " +
+      e.message +
+      " — ローカルサーバー経由で開いてください（file:// では動きません）。"
+    );
   }
 }
 

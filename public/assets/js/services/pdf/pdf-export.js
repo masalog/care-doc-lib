@@ -1,5 +1,5 @@
 import { $ } from "../../dom.js";
-import { getPdfOutput, setStatus, showBanner, v } from "./pdf-core.js";
+import { getPdfOutput, setStatus, showBanner, getFormValue } from "./pdf-core.js";
 import { generate } from "./pdf-draw.js";
 import { getActiveMember } from "../../models/storage-crud.js";
 
@@ -18,7 +18,7 @@ function buildFileName() {
   const d = String(now.getDate()).padStart(2, "0");
   const dateStr = `${y}年${Number(m)}月${Number(d)}日`;
   // 氏名の前後空白を除去し、名前中の空白は詰める。入力があれば「様」を付ける（未入力なら「無名」）
-  const raw = String(getActiveMember()?.name || v("name")).replace(/\s+/g, "");
+  const raw = String(getActiveMember()?.name || getFormValue("name")).replace(/\s+/g, "");
   const name = raw ? raw + "様" : "無名";
   return `${dateStr}_${name}_介護認定申請書.pdf`;
 }
