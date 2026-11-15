@@ -252,9 +252,16 @@ export function getPdfOutput() {
  * @returns {string} 新しいプレビューURL
  */
 export function setPdfOutput(pdfBytes, blob) {
+  // 前回生成したBlob URLがあれば解放してメモリリークを防ぐ
   if (lastUrl) URL.revokeObjectURL(lastUrl);
+
+  // 最新のPDFデータを保存
   lastPdfBytes = pdfBytes;
+
+  // Blobから新しいURLを生成して保持
   lastUrl = URL.createObjectURL(blob);
+
+  // 生成したURLを返却
   return lastUrl;
 }
 
@@ -262,26 +269,39 @@ export function setPdfOutput(pdfBytes, blob) {
  * 生成済みPDFとプレビュー表示を初期状態に戻す。
  * @returns {void}
  */
+/**
+ * PDFプレビュー関連の状態を初期化する
+ * - PDFデータを破棄
+ * - Blob URLを解放
+ * - プレビュー画面を非表示
+ * - ダウンロードボタンを無効化
+ */
 export function resetPdfState() {
+  // 保持しているPDFデータをクリア
   lastPdfBytes = null;
 
+  // 生成済みのBlob URLを解放してメモリリークを防ぐ
   if (lastUrl) {
     URL.revokeObjectURL(lastUrl);
     lastUrl = null;
   }
 
+  // PDFプレビューをクリアして非表示にする
   const preview = $("previewFrame");
   if (preview) {
     preview.src = "";
     preview.classList.add("is-hidden");
   }
 
+  // 「PDFを選択してください」などのプレースホルダーを表示
   const placeholder = $("previewPlaceholder");
   if (placeholder) placeholder.style.display = "block";
 
+  // PDFが存在しないためダウンロードを禁止
   const downloadBtn = $("dlBtn");
   if (downloadBtn) downloadBtn.disabled = true;
 
+  // プレビュー操作バーを非表示にする
   const previewBar = $("previewBar");
   if (previewBar) previewBar.style.display = "none";
 }
