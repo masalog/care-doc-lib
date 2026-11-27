@@ -22,33 +22,43 @@ CareDocLibは当初 Cloudflare Pages 上で動作する静的Webアプリとし�
 
 データ保存には IndexedDB を利用しています。
 
-当初検討していた SQLite への移行は実施しません。
+CareDocLib はローカルファーストの考え方を採用しています。
 
-本アプリは
+利用者データの正本は各端末の IndexedDB に保存し、サーバーによる常時同期は行いません。
+
+データ交換は JSON バックアップを利用し、必要に応じて他端末との共有や統合を行います。
+
+本アプリは次の利用形態を前提としています。
 
 - 単一利用者環境
+- 小規模事業所内での利用
 - オフライン利用
-- 数百～数千件規模のデータ管理
-- PDF生成中心
+- 数百〜数千件規模の利用者管理
+- PDF作成支援
 
-を前提としているため、シンプルさと保守性を優先し、IndexedDBを正式な永続化ストアとして採用します。
+そのため、
 
-また、業務ロジックは JavaScript に集約し、Rust は Tauri ランタイムとしてのみ利用します。
+- シンプルな構成
+- 保守性
+- データの可搬性
+- ローカル運用
 
----
+を優先し、IndexedDBを正式な永続化ストアとして採用しています。
+
+また、業務ロジックは JavaScript に集約し、Rust は Tauri Runtime としてのみ利用します。
 
 ![CareDocLib画面](https://github.com/user-attachments/assets/48009725-1ce7-4543-87d3-e20ccdcf45fa)
 
 ---
 
-## ロードマップ
+# ロードマップ
 
-### 目指すアーキテクチャ
+## 目指すアーキテクチャ
 
 ```text
 [Frontend : JavaScript]
 
-View（HTML）
+View
  ↓
 Controller
  ↓
@@ -64,7 +74,11 @@ Backup
  ↓
 JSON Export / Import
 
-PDF生成
+Merge
+ ↓
+Data Integration
+
+PDF
  ↓
 pdf-lib
 
@@ -74,7 +88,6 @@ pdf-lib
 Window
 Dialog
 File Access
-Updater
 
 
 [Rust]
@@ -84,12 +97,13 @@ Tauri Runtime
 
 ### 設計方針
 
-- アプリケーション本体はJavaScriptで実装する
-- PDF生成はpdf-libで統一する
-- データ保存はIndexedDBを利用する
-- JSONバックアップを正式な退避手段とする
-- SQLを導入しない
-- SQLiteを導入しない
+- アプリケーション本体は JavaScript で実装する
+- PDF生成は pdf-lib を利用する
+- データ保存は IndexedDB を利用する
+- JSONバックアップを正式な退避およびデータ交換手段とする
+- リアルタイム同期を前提としない
+- 必要な場合のみデータ交換を行う
+- 将来的なマージ機能に対応する
 - Web版とデスクトップ版で可能な限りコードを共有する
 - RustはTauri実行基盤として利用する
 
@@ -101,7 +115,7 @@ Tauri Runtime
 02. [機能要件定義書](docs/functional-requirements.md)
 03. [品質要件定義書](docs/quality-requirements.md)
 04. [ADR-001：Tauri採用](docs/adr/ADR-001-platform-tauri.md)
-05. ADR-002：IndexedDB継続採用
+05. [ADR-002：IndexedDB継続採用](docs/adr/ADR-002-indexeddb-storage.md)
 06. [基本設計書](docs/basic-design.md)
 07. [画面設計書](docs/screen-design.md)
 
@@ -120,7 +134,7 @@ Tauri Runtime
 
 ## 第3フェーズ：設計整理
 
-09. ADR-003：JavaScript中心アーキテクチャ整理
+09. [ADR-003：データ保護方針](docs/adr/ADR-003-data-protection.md)
 
 10. IndexedDBストア設計見直し
 
@@ -144,7 +158,9 @@ Tauri Runtime
 
 15. バックアップ機能改善
 
-16. データ件数増加時の性能確認
+16. JSONマージ機能設計
+
+17. データ件数増加時の性能確認
 
 ### 確認対象
 
@@ -157,13 +173,13 @@ Tauri Runtime
 
 ## 第5フェーズ：PDF・運用
 
-17. PDF出力回帰テスト
+18. PDF出力回帰テスト
 
-18. テンプレート・座標データ管理整理
+19. テンプレート・座標データ管理整理
 
-19. ログ方針整備
+20. ログ方針整備
 
-20. 配布・更新方式整備
+21. 配布・更新方式整備
 
 対象：
 
@@ -242,9 +258,10 @@ src-tauri/target/release/bundle/
 - サーバー不要
 - オフライン利用可能
 - Windowsデスクトップアプリ
-- PDF生成機能をそのまま利用
 - IndexedDB利用
 - JSONバックアップ対応
+- JSONによるデータ交換対応
+- 個人情報の外部送信なし
 
 ---
 
@@ -289,13 +306,60 @@ src-tauri/target/release/bundle/
 - JSONインポート
 - 復元前自動バックアップ
 
+### データ共有
+
+- JSONによるデータ交換
+- PC移行
+- 他端末への引き継ぎ
+- 事業所内共有
+
+---
+
+## データ共有方針
+
+CareDocLib はリアルタイム同期を前提としていません。
+
+利用者データの正本は各端末の IndexedDB に保存します。
+
+複数端末で利用する場合は、JSONバックアップを交換して運用します。
+
+### 想定運用
+
+```text
+担当者A
+ ↓
+JSON出力
+
+担当者B
+ ↓
+JSON出力
+
+担当者C
+ ↓
+JSON出力
+
+管理者
+ ↓
+取り込み
+ ↓
+統合版作成
+```
+
+### 主な用途
+
+- バックアップ
+- PC移行
+- データ引き継ぎ
+- 職員間共有
+- 事業所内集約
+
 ---
 
 ## データ保存
 
-CareDocLibは IndexedDB を正式な永続化ストアとして利用します。
+CareDocLibは IndexedDB を正式な永続化ストアとして採用しています。
 
-### 保存内容
+### 保存対象
 
 - 利用者情報
 - 共通設定
@@ -308,28 +372,49 @@ CareDocLibは IndexedDB を正式な永続化ストアとして利用します�
 - 数千件規模のデータに対応
 - サーバー不要
 
-### バックアップ戦略
+### バックアップ・共有戦略
 
-以下を組み合わせてデータを保護します。
+CareDocLibではバックアップファイルを単なる復旧手段ではなく、データ交換フォーマットとして位置付けています。
+
+JSONバックアップは以下の用途で利用します。
+
+- 障害時の復旧
+- PC移行
+- データ共有
+- 事業所内集約
+
+### 保護手段
 
 - IndexedDB保存
 - JSONエクスポート
 - JSONインポート
 - 復元前自動バックアップ
 
+### 将来計画
+
+JSONマージ機能の追加を検討しています。
+
+対象：
+
+- 新規利用者追加
+- 重複利用者検出
+- 更新日時比較
+- 上書き判定
+- 統合版作成
+
 ---
 
 ## PDFBox → pdf-lib 対応表
 
-| 現状（PDFBox / Java） | 本アプリ（pdf-lib / JS） |
-|---|---|
+| PDFBox / Java | pdf-lib / JavaScript |
+|---------------|----------------------|
 | Loader.loadPDF() | PDFDocument.load() |
 | PDType0Font.load() | registerFontkit() + embedFont() |
 | showText() | page.drawText() |
-| drawCircle() | "〇"描画 |
+| drawCircle() | 「〇」描画 |
 | YAML座標定義 | JSON座標定義 |
 
-座標原点はどちらも左下基準のため、座標値はそのまま利用しています。
+座標原点はいずれも左下基準のため、座標データはそのまま利用しています。
 
 ---
 
@@ -340,7 +425,7 @@ CareDocLibは IndexedDB を正式な永続化ストアとして利用します�
 | フロントエンド | HTML / CSS / JavaScript |
 | PDF生成 | pdf-lib |
 | データ保存 | IndexedDB |
-| バックアップ | JSON |
+| データ交換 | JSON |
 | パッケージ管理 | Bun |
 | デスクトップ化 | Tauri 2.x |
 | Rust利用範囲 | Tauri Runtime |
@@ -350,25 +435,29 @@ CareDocLibは IndexedDB を正式な永続化ストアとして利用します�
 
 ## アーキテクチャ方針
 
-CareDocLib は「JavaScriptアプリケーションをTauriでデスクトップ化する」という考え方を採用します。
+CareDocLib はローカルファースト・サーバーレスアーキテクチャを採用します。
 
-そのため、
+利用者データの正本は各端末の IndexedDB に保存します。
 
-- 業務ロジック
-- データ管理
-- PDF生成
-- バックアップ
+サーバーによる常時同期は行わず、必要に応じて JSON バックアップを交換することでデータ共有を実現します。
 
-はすべてJavaScriptで実装します。
+将来的にはマージ機能を追加し、
 
-Rustはアプリケーション本体ではなく、Tauri実行基盤として使用します。
+- 新規データ統合
+- 重複検出
+- 更新データ反映
+
+を行えるようにする予定です。
+
+業務ロジック、データ管理、PDF生成は JavaScript に集約し、Rust は Tauri Runtime としてのみ利用します。
 
 この方針により、
 
 - 保守コスト削減
 - 開発速度向上
-- Web技術への集中
-- コード量削減
+- オフライン利用
+- 個人情報の外部送信削減
+- Web版への展開容易化
 
 を実現します。
 
