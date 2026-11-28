@@ -6,20 +6,23 @@
     <title>CareDocLib - 管理画面</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
+<body class="auth-pending">
+    <div id="login-overlay"></div>
     <header>
         <div class="header-title-row">
             <h1>CareDocLib 管理画面</h1>
             <span class="header-notice">利用者データと共通設定はこの端末に保存されます</span>
+            <div id="auth-user-bar" class="auth-user-bar"></div>
             <a href="index.html" class="admin-link">→ PDF生成に戻る</a>
         </div>
-        <p>利用者データ・共通設定の管理</p>
+        <p>利用者データ・共通設定・アカウントの管理</p>
     </header>
 
     <nav>
         <button class="nav-btn active" data-section="members">利用者管理</button>
         <button class="nav-btn" data-section="settings">共通設定</button>
         <button class="nav-btn" data-section="backup">バックアップ</button>
+        <button class="nav-btn" data-section="accounts">アカウント管理</button>
     </nav>
 
     <main>
@@ -244,6 +247,96 @@
                 <input type="file" id="import-backup-file" accept=".json,application/json">
             </div>
             <div id="backup-message" class="message" role="status"></div>
+        </section>
+
+        <section id="section-accounts" class="section hidden">
+            <h2>アカウント管理</h2>
+            <p class="notice">全アカウント共通権限（1ロール）で動作します。最後の1件を削除すると初回アカウント登録へ戻ります（利用者データは保持されます）。</p>
+            <div id="account-list"></div>
+
+            <h3>新規アカウント追加</h3>
+            <form id="new-account-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="acc-new-id">アカウントID（半角英数字・-・_ / 2〜32文字） *</label>
+                        <input type="text" id="acc-new-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-new-name">表示名 *</label>
+                        <input type="text" id="acc-new-name" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="acc-new-pass">初期PIN（半角数字4桁） *</label>
+                        <input type="password" id="acc-new-pass" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-new-confirm">初期PIN（確認） *</label>
+                        <input type="password" id="acc-new-confirm" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required>
+                    </div>
+                </div>
+                <button id="create-account-btn" type="submit" class="btn btn-primary">アカウントを追加</button>
+            </form>
+
+            <div id="account-edit-container" class="hidden account-edit-panel">
+                <h3 id="account-edit-title">アカウント編集</h3>
+                <form id="account-name-form">
+                    <input type="hidden" id="acc-edit-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-edit-name">表示名 *</label>
+                            <input type="text" id="acc-edit-name" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">表示名を更新</button>
+                    </div>
+                </form>
+
+                <form id="account-password-form">
+                    <h4>PIN変更・再設定</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-operator-pass">確認用：現在のログインユーザーのPIN *</label>
+                            <input type="password" id="acc-operator-pass" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-change-pass">新しいPIN（半角数字4桁） *</label>
+                            <input type="password" id="acc-change-pass" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="acc-change-confirm">新しいPIN（確認） *</label>
+                            <input type="password" id="acc-change-confirm" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">PINを更新</button>
+                        <button id="cancel-account-edit-btn" type="button" class="btn btn-secondary">閉じる</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="account-delete-confirm-container" class="hidden account-edit-panel">
+                <h3 id="account-delete-title">最後のアカウントを削除</h3>
+                <p class="notice">最後のアカウントを削除すると、初回アカウント登録画面へ戻ります（保存済みの利用者データと共通設定は保持されます）。誤削除を防ぐため、現在のPINを入力してください。</p>
+                <form id="account-delete-confirm-form">
+                    <input type="hidden" id="acc-delete-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-delete-operator-pass">確認用：現在のPIN（半角数字4桁） *</label>
+                            <input type="password" id="acc-delete-operator-pass" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">削除を実行</button>
+                        <button id="cancel-account-delete-btn" type="button" class="btn btn-secondary">キャンセル</button>
+                    </div>
+                </form>
+            </div>
+            <div id="accounts-message" class="message" role="status"></div>
         </section>
     </main>
 
