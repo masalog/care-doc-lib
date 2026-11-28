@@ -181,13 +181,24 @@ export async function getAuthStatus(nowMs = Date.now()) {
   }
 
   const account = await getAccount(session.accountId);
+
   if (!account) {
     clearSession();
     return { state: "login", session: null };
   }
 
+  const latestSession = readSession();
+
+  if (!latestSession) {
+    return { state: "login", session: null };
+  }
+
+  if (latestSession.locked) {
+    return { state: "locked", session: latestSession };
+  }
+
   const syncedSession = {
-    ...session,
+    ...latestSession,
     displayName: account.displayName,
     role: "staff",
   };
