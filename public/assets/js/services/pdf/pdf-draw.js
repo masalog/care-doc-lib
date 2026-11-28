@@ -227,11 +227,18 @@ function isValidApplyDate(year, month, day) {
  * @returns {Promise<void>}
  */
 export async function generate() {
-  await requireActiveSession();
 
   // 生成開始時点の利用者世代を保持する
   // PDF生成中に利用者が切り替わった場合の検知に利用する
   const generationAtStart = getMemberGeneration();
+
+  await requireActiveSession();
+
+  // 認証待機中に利用者が切り替わっていたら中断
+  if (generationAtStart !== getMemberGeneration()) {
+    setStatus("利用者が切り替わったためPDF生成を中断しました。");
+    return;
+  }
 
   // PDFテンプレート・レイアウト情報・フォントを取得
   const { layout, templateBytes, fontBytes } = getPdfAssets();
