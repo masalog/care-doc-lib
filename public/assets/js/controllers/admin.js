@@ -693,12 +693,14 @@ async function handleChangePassword(event) {
 }
 
 /**
- * 指定したアカウントを確認後に削除する。最後の1件の場合はPIN再入力パネルを表示する。
+ * 指定したアカウントを確認後に削除する。
+ * 最後のアカウント削除が必要と判断された場合はPIN再入力パネルを表示する。
  * @param {{accountId: string, displayName: string}} account 対象アカウント
  * @returns {Promise<void>}
  */
 async function handleDeleteAccount(account) {
   showAdminMessage("accounts-message", "");
+
   if (adminAccounts.length <= 1) {
     showAccountDeletePanel(account);
     return;
@@ -710,16 +712,41 @@ async function handleDeleteAccount(account) {
 
   try {
     const result = await deleteManagedAccount(account.accountId);
+
     if (result.selfDeleted) {
       window.location.reload();
       return;
     }
+
     if ($("acc-edit-id").value === account.accountId) {
       hideAccountEditPanel();
     }
+
     await refreshAccounts();
-    showAdminMessage("accounts-message", `アカウント「${account.accountId}」を削除しました。`);
+
+    showAdminMessage(
+      "accounts-message",
+      `アカウント「${account.accountId}」を削除しました。`
+    );
   } catch (error) {
+    // 一覧が古く、実際には最後の1件だったケースに対応
+    if (error.message.includes("PIN")) {
+      await refreshAccounts();
+
+      const latestAccount =
+        adminAccounts.find(
+          (item) => item.accountId === account.accountId
+        ) ?? account;
+
+      showAccountDeletePanel(latestAccount);
+      showAdminMessage(
+        "accounts-message",
+        "最後のアカウントを削除するにはPINの再入力が必要です。",
+        true
+      );
+      return;
+    }
+
     showAdminMessage("accounts-message", error.message, true);
   }
 }
