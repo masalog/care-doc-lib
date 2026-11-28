@@ -112,10 +112,44 @@ export function insertAccount(record) {
 export function putAccount(record) {
   return new Promise((resolve, reject) => {
     const transaction = getDB().transaction("accounts", "readwrite");
-    const req = transaction.objectStore("accounts").put(record);
-    req.onerror = () => reject(req.error ?? new Error("アカウントを更新できませんでした。"));
+    const store = transaction.objectStore("accounts");
+
+    let rejectionError = null;
+
+    const getReq = store.get(record.accountId);
+
+    getReq.onsuccess = () => {
+      if (!getReq.result) {
+        rejectionError = new Error("対象のアカウントが見つかりません。");
+        transaction.abort();
+        return;
+      }
+
+      store.put(record);
+    };
+
+    getReq.onerror = () => {
+      rejectionError =
+        getReq.error ?? new Error("アカウント情報を確認できませんでした。");
+      transaction.abort();
+    };
+
+    transaction.onerror = () => {
+      if (!rejectionError) {
+        rejectionError =
+          transaction.error ?? new Error("アカウントを更新できませんでした。");
+      }
+    };
+
+    transaction.onabort = () => {
+      reject(
+        rejectionError ??
+          transaction.error ??
+          new Error("アカウント更新処理が中断されました。")
+      );
+    };
+
     transaction.oncomplete = () => resolve(record);
-    transaction.onabort = () => reject(transaction.error ?? new Error("アカウント更新処理が中断されました。"));
   });
 }
 
