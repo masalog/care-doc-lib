@@ -21,6 +21,8 @@ const LOCK_CHECK_INTERVAL_MS = 15000;
 
 /** @type {boolean} */
 let initializedBusinessPage = false;
+/** @type {Promise<void>|null} */
+let businessPageInitializationPromise = null;
 /** @type {((session: import("../services/auth/auth-service.js").AuthSession) => Promise<void>|void)|null} */
 let authenticatedCallback = null;
 /** @type {number} */
@@ -123,8 +125,21 @@ async function applyAuthStatus(status) {
     hideAuthOverlay();
     updateHeaderAuthBar(status.session);
     if (!initializedBusinessPage && authenticatedCallback) {
-      await authenticatedCallback(status.session);
-      initializedBusinessPage = true;
+      if (!businessPageInitializationPromise) {
+        businessPageInitializationPromise = Promise.resolve(
+          authenticatedCallback(status.session)
+        )
+          .then(() => {
+            initializedBusinessPage = true;
+          })
+          .catch((error) => {
+            initializedBusinessPage = false;
+            businessPageInitializationPromise = null;
+            throw error;
+          });
+      }
+
+      await businessPageInitializationPromise;
     }
     return;
   }
