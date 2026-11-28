@@ -1,4 +1,10 @@
-import { getDB, MEMBER_FIELDS, SETTINGS_FIELDS } from "../../models/storage-core.js";
+import {
+  getDB,
+  MEMBER_FIELDS,
+  SETTINGS_FIELDS,
+  withOperatorMetadata,
+} from "../../models/storage-core.js";
+import { requireActiveSession } from "../auth/auth-service.js";
 
 /**
  * IndexedDBデータのJSONバックアップ、検証、復元を提供する。
@@ -194,7 +200,8 @@ function createBackupRecord(record, fields, includeId = false) {
  * @returns {Promise<BackupData>} 作成したバックアップ
  * @throws {Error} トランザクションまたはデータの処理に失敗した場合
  */
-export function exportBackup({ beforeRestore = false } = {}) {
+export async function exportBackup({ beforeRestore = false } = {}) {
+  await requireActiveSession();
   return new Promise((resolve, reject) => {
     let transaction;
     let membersRequest;
@@ -294,7 +301,8 @@ function getCurrentMemberCount() {
  * @returns {Promise<void>}
  * @throws {Error} 復元または画面データの再読み込みに失敗した場合
  */
-function restoreBackupData(backup) {
+function restoreBackupData(backup, operator) {
+  const nowIso = new Date().toISOString();
   return new Promise((resolve, reject) => {
     let transaction;
     try {
@@ -302,10 +310,13 @@ function restoreBackupData(backup) {
       const membersStore = transaction.objectStore("members");
       const settingsStore = transaction.objectStore("settings");
       membersStore.clear();
-      backup.members.forEach((member) => membersStore.put(member));
+      backup.members.forEach((member) =>
+        membersStore.put(withOperatorMetadata(member, null, operator, nowIso)));
       settingsStore.clear();
       if (backup.settings) {
-        settingsStore.put({ ...backup.settings, id: "singleton" });
+        settingsStore.put(
+          withOperatorMetadata({ ...backup.settings, id: "singleton" }, null, operator, nowIso)
+        );
       }
     } catch (error) {
       reject(error);
@@ -331,6 +342,7 @@ function restoreBackupData(backup) {
  * @throws {Error} 検証、読み込み、バックアップ、復元に失敗した場合
  */
 export async function importBackup(file, afterRestore) {
+  const session = await requireActiveSession();
   validateBackupSize(file.size);
   const backup = validateBackup(await readBackupFile(file), file.size);
   if (backup.members.length === 0) {
@@ -349,7 +361,7 @@ export async function importBackup(file, afterRestore) {
   if (!confirmed) return null;
 
   await exportBackup({ beforeRestore: true });
-  await restoreBackupData(backup);
+  await restoreBackupData(backup, session);
   await afterRestore();
   return {
     membersCount: backup.members.length,

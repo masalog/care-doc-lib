@@ -4,6 +4,9 @@ import { $ } from "../dom.js";
  * IndexedDBのスキーマと画面項目との変換を提供する。
  * @fileoverview IndexedDBスキーマと画面項目との変換。
  */
+export const DB_NAME = "caredoc";
+export const DB_VERSION = 2;
+
 // 利用者データ項目（人ごとに変わる）
 /** @type {string[]} */
 export const MEMBER_FIELDS = [
@@ -28,8 +31,9 @@ let db = null;
  * @returns {Promise<IDBDatabase>} 開いたデータベース
  */
 export function openDB() {
+  if (db) return Promise.resolve(db);
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open("caredoc", 1);
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const d = e.target.result;
       if (!d.objectStoreNames.contains("members")) {
@@ -38,12 +42,21 @@ export function openDB() {
       if (!d.objectStoreNames.contains("settings")) {
         d.createObjectStore("settings", { keyPath: "id" });
       }
+      if (!d.objectStoreNames.contains("accounts")) {
+        d.createObjectStore("accounts", { keyPath: "accountId" });
+      }
     };
     req.onsuccess = () => {
       db = req.result;
+      db.onversionchange = () => {
+        db?.close();
+        db = null;
+      };
       resolve(db);
     };
     req.onerror = () => reject(req.error);
+    req.onblocked = () =>
+      reject(new Error("他のタブまたは画面がデータベースを使用中です。閉じてから再読み込みしてください。"));
   });
 }
 
@@ -63,6 +76,26 @@ export function getDB() {
  * @returns {IDBObjectStore} オブジェクトストア
  */
 export function tx(store, mode) { return getDB().transaction(store, mode).objectStore(store); }
+
+/**
+ * レコードに作成者・最終更新者の操作者識別メタデータを付与する。
+ * @param {Record<string, unknown>} data 保存する業務データ
+ * @param {Record<string, unknown>|null|undefined} existing 既存レコード
+ * @param {{accountId: string, displayName: string}} operator 操作中の担当者セッション
+ * @param {string} [nowIso=new Date().toISOString()] 保存時刻（ISO 8601）
+ * @returns {Record<string, unknown>} メタデータ付きのレコード
+ */
+export function withOperatorMetadata(data, existing, operator, nowIso = new Date().toISOString()) {
+  return {
+    ...data,
+    createdBy: existing?.createdBy || operator.accountId,
+    createdByName: existing?.createdByName || operator.displayName,
+    createdAt: existing?.createdAt || nowIso,
+    updatedBy: operator.accountId,
+    updatedByName: operator.displayName,
+    updatedAt: nowIso,
+  };
+}
 
 /**
  * 指定フィールドの現在の画面値をオブジェクトとして収集する。

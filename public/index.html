@@ -6,11 +6,13 @@
     <title>CareDocLib - 介護認定申請書 作成アプリ</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
+<body class="auth-pending">
+    <div id="login-overlay"></div>
     <header>
         <div class="header-title-row">
             <h1>CareDocLib</h1>
             <p class="header-catchcopy">介護認定申請書を作成します</p>
+            <div id="auth-user-bar" class="auth-user-bar"></div>
             <a href="admin.html" class="admin-link">→ 管理画面へ</a>
         </div>
         <p>介護認定申請書 作成アプリ</p>

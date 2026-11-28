@@ -75,7 +75,6 @@ header p {
 }
 
 .admin-link {
-    margin-left: auto;
     white-space: nowrap;
     color: white;
     text-decoration: none;
@@ -85,6 +84,47 @@ header p {
 
 .admin-link:hover {
     color: white;
+}
+
+body.auth-pending > header,
+body.auth-pending > nav,
+body.auth-pending > main,
+body.auth-pending > footer {
+    display: none;
+}
+
+.auth-user-bar {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.auth-user-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: white;
+    background: rgba(255, 255, 255, 0.16);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.btn-header {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn-header:hover {
+    background-color: rgba(255, 255, 255, 0.32);
+}
+
+.account-edit-panel {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
 }
 
 nav {
@@ -337,12 +377,27 @@ h3 {
     overflow-y: auto;
 }
 
-#login-overlay main {
+#login-overlay.hidden {
+    display: none;
+}
+
+#login-overlay > main {
+    display: flex;
+    flex-direction: column;
     flex: 1;
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 0 20px;
-    width: 400px;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    width: 100%;
+}
+
+.auth-card {
+    margin: auto 0;
+    background: #ffffff;
+}
+
+.auth-card .message:empty {
+    display: none;
 }
 
 /* フッター */
@@ -401,6 +456,7 @@ footer ul li::before {
         flex-basis: 100%;         /* ← キャッチコピーも1行使う */
     }
 
+    .auth-user-bar,
     .admin-link {
         margin-left: 0;           /* ← 右上固定を解除 */
         white-space: normal;      /* ← 折り返し可能にする */
