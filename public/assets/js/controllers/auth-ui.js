@@ -27,6 +27,8 @@ let authenticatedCallback = null;
 let lastTouchReportedAt = 0;
 /** @type {boolean} */
 let watchersBound = false;
+/** @type {HTMLElement|null} */
+let lastFocusedElement = null;
 
 /**
  * 入力欄用のラベル付きグループDOM要素を作成する。
@@ -121,8 +123,8 @@ async function applyAuthStatus(status) {
     hideAuthOverlay();
     updateHeaderAuthBar(status.session);
     if (!initializedBusinessPage && authenticatedCallback) {
-      initializedBusinessPage = true;
       await authenticatedCallback(status.session);
+      initializedBusinessPage = true;
     }
     return;
   }
@@ -143,6 +145,17 @@ function hideAuthOverlay() {
     overlay.replaceChildren();
   }
   document.body.classList.remove("auth-pending");
+
+  if (
+    lastFocusedElement &&
+    document.contains(lastFocusedElement) &&
+    !lastFocusedElement.hasAttribute("disabled")
+  ) {
+    lastFocusedElement.focus();
+  }
+
+  lastFocusedElement = null;
+
 }
 
 /**
@@ -153,6 +166,15 @@ function hideAuthOverlay() {
 function renderAuthOverlay(status) {
   const overlay = $("login-overlay");
   if (!overlay) return;
+
+  if (
+    status.state === "locked" &&
+    !lastFocusedElement &&
+    document.activeElement instanceof HTMLElement &&
+    !overlay.contains(document.activeElement)
+  ) {
+    lastFocusedElement = document.activeElement;
+  }
 
   const accountKey = status.session?.accountId ?? "";
   if (
