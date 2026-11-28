@@ -2,6 +2,7 @@ import { $ } from "../../dom.js";
 import { getPdfOutput, setStatus, showBanner, getFormValue } from "./pdf-core.js";
 import { generate } from "./pdf-draw.js";
 import { getActiveMember } from "../../models/storage-crud.js";
+import { requireActiveSession } from "../auth/auth-service.js";
 
 /**
  * 生成済みPDFのファイル名作成、ダウンロード、および画面イベントを担当する。
@@ -53,7 +54,15 @@ function buildFileName() {
  *
  * @returns {void}
  */
-function download() {
+async function download() {
+  try {
+    await requireActiveSession();
+  } catch (error) {
+    setStatus(error.message);
+    showBanner(error.message);
+    return;
+  }
+
   const { lastPdfBytes } = getPdfOutput();
 
   // PDF未生成の場合は何もしない
@@ -111,7 +120,15 @@ if ($("genBtn")) {
  * 生成済みPDFを新しいタブで表示する。
  * PDFが未生成の場合は何もしない。
  */
-function openPdfInNewTab() {
+async function openPdfInNewTab() {
+  try {
+    await requireActiveSession();
+  } catch (error) {
+    setStatus(error.message);
+    showBanner(error.message);
+    return;
+  }
+
   const { lastUrl } = getPdfOutput();
 
   // PDFの表示URLが存在する場合のみ開く
