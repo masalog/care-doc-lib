@@ -12,6 +12,7 @@ import {
   getActiveSettings,
   getMemberGeneration,
 } from "../../models/storage-crud.js";
+import { requireActiveSession } from "../auth/auth-service.js";
 
 /**
  * 申請書テンプレートへの値の描画とPDF生成を行う。
@@ -226,6 +227,7 @@ function isValidApplyDate(year, month, day) {
  * @returns {Promise<void>}
  */
 export async function generate() {
+  await requireActiveSession();
 
   // 生成開始時点の利用者世代を保持する
   // PDF生成中に利用者が切り替わった場合の検知に利用する
