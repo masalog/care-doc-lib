@@ -1,5 +1,5 @@
 import { $ } from "../dom.js";
-import { openDB, tx } from "./storage-core.js";
+import { getDB, openDB, tx, withOperatorMetadata } from "./storage-core.js";
 import {
   deleteMember,
   loadMember,
@@ -9,6 +9,7 @@ import {
   saveSettings,
 } from "./storage-crud.js";
 import { setStatus } from "../services/pdf/pdf-core.js";
+import { requireActiveSession } from "../services/auth/auth-service.js";
 
 /**
  * 初回起動時の初期データ投入と、PDF画面・管理画面向けのデータ層初期化を提供する。
@@ -34,41 +35,53 @@ const SEED_SETTINGS = {
   doctorName:"井上 直樹", clinicName:"すこやかメディカルセンター", clinicPostal:"104-8739", clinicAddress:"東京都中央区東光川5-6-3", clinicPhone:"020-0802-8647",
 };
 
+/** @type {boolean} */
+let storageEventsBound = false;
+
 /**
  * 利用者ストアが空の場合に限り、初期利用者と共通設定を投入する。
+ * @param {{accountId: string, displayName: string}|null} [operator=null] 初期データ投入時の担当者
  * @returns {Promise<boolean>} 初期データを投入した場合はtrue
  */
-export function seedIfEmpty() {
+export function seedIfEmpty(operator = null) {
   return new Promise((resolve) => {
     const req = tx("members", "readonly").count();
     req.onsuccess = () => {
       if (req.result > 0) { resolve(false); return; }
-      const store = tx("members", "readwrite");
-      SEED_MEMBERS.forEach(m => store.add(m));
-      store.transaction.oncomplete = () => {
-        const sset = tx("settings", "readwrite");
-        sset.put(SEED_SETTINGS);
-        sset.transaction.oncomplete = () => resolve(true);
-      };
+      const nowIso = new Date().toISOString();
+      const stamp = (record) =>
+        operator ? withOperatorMetadata(record, null, operator, nowIso) : record;
+      const transaction = getDB().transaction(["members", "settings"], "readwrite");
+      const memberStore = transaction.objectStore("members");
+      const settingsStore = transaction.objectStore("settings");
+      SEED_MEMBERS.forEach((m) => memberStore.add(stamp(m)));
+      settingsStore.put(stamp(SEED_SETTINGS));
+      transaction.oncomplete = () => resolve(true);
+      transaction.onerror = () => resolve(false);
+      transaction.onabort = () => resolve(false);
     };
     req.onerror = () => resolve(false);
   });
 }
 
 /**
- * IndexedDBを初期化し、画面に必要な初期データとイベントを設定する。
+ * IndexedDBを初期化し、認証後に画面へ必要な初期データとイベントを設定する。
  * @returns {Promise<void>}
  */
 export async function initStorage() {
   try {
     await openDB();
-    await seedIfEmpty();   // 初回のみ CareDocWeb と同じ初期データを投入
+    const session = await requireActiveSession();
+    await seedIfEmpty(session);   // 初回のみ CareDocWeb と同じ初期データを投入
     await loadMemberList();
-    loadSettings();  // 起動時に共通設定を自動復元
-    if ($("memberSelect")) $("memberSelect").addEventListener("change", (e) => loadMember(e.target.value));
-    if ($("saveMemberBtn")) $("saveMemberBtn").addEventListener("click", saveMember);
-    if ($("deleteMemberBtn")) $("deleteMemberBtn").addEventListener("click", deleteMember);
-    if ($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", saveSettings);
+    await loadSettings();  // 起動時に共通設定を自動復元
+    if (!storageEventsBound) {
+      if ($("memberSelect")) $("memberSelect").addEventListener("change", (e) => loadMember(e.target.value));
+      if ($("saveMemberBtn")) $("saveMemberBtn").addEventListener("click", saveMember);
+      if ($("deleteMemberBtn")) $("deleteMemberBtn").addEventListener("click", deleteMember);
+      if ($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", saveSettings);
+      storageEventsBound = true;
+    }
   } catch (e) {
     console.warn("IndexedDB初期化失敗:", e);
     setStatus("データ保存機能が使えません: " + e.message);
